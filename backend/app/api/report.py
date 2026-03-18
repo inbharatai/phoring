@@ -1,0 +1,891 @@
+"""
+Report API endpoints.
+Handles report generation, retrieval, download, and interactive Q&A.
+"""
+
+import os
+import threading
+from flask import request, jsonify, send_file
+
+from. import report_bp
+from..config import Config
+from..services.report_agent import ReportAgent, ReportManager, ReportStatus
+from..services.simulation_manager import SimulationManager
+from..models.project import ProjectManager
+from..models.task import TaskManager, TaskStatus
+from..utils.logger import get_logger
+from..utils.validators import Validators, ValidationError
+from..utils.llm_client import get_available_validators
+
+logger = get_logger('phoring.api.report')
+
+
+# ============== Validator discovery endpoint ==============
+
+@report_bp.route('/validators', methods=['GET'])
+def list_validators():
+    """Return available AI validators (model names, not keys)."""
+    try:
+        validators = get_available_validators()
+        return jsonify({"success": True, "data": validators})
+    except Exception as e:
+        logger.error(f"Failed to list validators: {e}", exc_info=True)
+        return jsonify({"success": False, "error": "Failed to list validators. Check server logs for details."}), 500
+
+
+# ============== Report generation endpoint ==============
+
+@report_bp.route('/generate', methods=['POST'])
+def generate_report():
+    """
+    Generate a simulation analysis report (async task).
+
+    Returns a task_id immediately. Poll GET /api/report/generate/status for progress.
+
+    Request body (JSON):
+        {
+            "simulation_id": "sim_xxxx",
+            "force_regenerate": false  // optional
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "simulation_id": "sim_xxxx",
+                "task_id": "task_xxxx",
+                "status": "generating",
+                "message": "Report generation task started"
+            }
+        }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = data.get('simulation_id')
+        if not simulation_id:
+            return jsonify({
+                "success": False,
+                "error": "Please provide simulation_id"
+            }), 400
+
+        Validators.validate_simulation_id(simulation_id)
+
+        force_regenerate = data.get('force_regenerate', False)
+        consensus_config = data.get('consensus_config', {"enabled": False, "validators": []})
+
+        # Get simulation info
+        manager = SimulationManager()
+        state = manager.get_simulation(simulation_id)
+
+        if not state:
+            return jsonify({
+                "success": False,
+                "error": f"Simulation not found: {simulation_id}"
+            }), 404
+
+        # Check for existing report
+        if not force_regenerate:
+            existing_report = ReportManager.get_report_by_simulation(simulation_id)
+            if existing_report and existing_report.status == ReportStatus.COMPLETED:
+                return jsonify({
+                    "success": True,
+                    "data": {
+                        "simulation_id": simulation_id,
+                        "report_id": existing_report.report_id,
+                        "status": "completed",
+                        "message": "Report already exists",
+                        "already_generated": True
+                    }
+                })
+
+        # Get project info
+        project = ProjectManager.get_project(state.project_id)
+        if not project:
+            return jsonify({
+                "success": False,
+                "error": f"Project not found: {state.project_id}"
+            }), 404
+
+        graph_id = state.graph_id or project.graph_id
+        if not graph_id:
+            return jsonify({
+                "success": False,
+                "error": "Missing graph ID, please ensure graph has already been built"
+            }), 400
+
+        simulation_requirement = project.simulation_requirement
+        if not simulation_requirement:
+            return jsonify({
+                "success": False,
+                "error": "Missing simulation requirement description"
+            }), 400
+
+        # Generate report_id
+        import uuid
+        report_id = f"report_{uuid.uuid4().hex[:12]}"
+
+        # Create async task
+        task_manager = TaskManager()
+        task_id = task_manager.create_task(
+            task_type="report_generate",
+            metadata={
+                "simulation_id": simulation_id,
+                "graph_id": graph_id,
+                "report_id": report_id
+            }
+        )
+
+        # Background report generation
+        def run_generate():
+            try:
+                task_manager.update_task(
+                    task_id,
+                    status=TaskStatus.PROCESSING,
+                    progress=0,
+                    message="Initializing Report Agent..."
+                )
+
+                agent = ReportAgent(
+                    graph_id=graph_id,
+                    simulation_id=simulation_id,
+                    simulation_requirement=simulation_requirement,
+                    consensus_config=consensus_config
+                )
+
+                def progress_callback(stage, progress, message):
+                    task_manager.update_task(
+                        task_id,
+                        progress=progress,
+                        message=f"[{stage}] {message}"
+                    )
+
+                report = agent.generate_report(
+                    progress_callback=progress_callback,
+                    report_id=report_id
+                )
+
+                ReportManager.save_report(report)
+
+                if report.status == ReportStatus.COMPLETED:
+                    task_manager.complete_task(
+                        task_id,
+                        result={
+                            "report_id": report.report_id,
+                            "simulation_id": simulation_id,
+                            "status": "completed"
+                        }
+                    )
+                else:
+                    task_manager.fail_task(task_id, report.error or "Report generation failed")
+
+            except Exception as e:
+                logger.error(f"Report generation failed: {e}")
+                task_manager.fail_task(task_id, str(e))
+
+        thread = threading.Thread(target=run_generate, daemon=True)
+        thread.start()
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "simulation_id": simulation_id,
+                "report_id": report_id,
+                "task_id": task_id,
+                "status": "generating",
+                "message": "Report generation task started. Poll /api/report/generate/status for progress.",
+                "already_generated": False
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to start report generation: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/generate/status', methods=['POST'])
+def get_generate_status():
+    """
+    Query report generation task progress.
+
+    Request body (JSON):
+        {
+            "task_id": "task_xxxx",        // optional
+            "simulation_id": "sim_xxxx"    // optional
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "task_id": "task_xxxx",
+                "status": "processing|completed|failed",
+                "progress": 45,
+                "message": "..."
+            }
+        }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+
+        task_id = data.get('task_id')
+        simulation_id = data.get('simulation_id')
+
+        if simulation_id:
+            Validators.validate_simulation_id(simulation_id)
+        if task_id:
+            Validators.validate_task_id(task_id)
+
+        # If simulation_id provided, check for completed report
+        if simulation_id:
+            existing_report = ReportManager.get_report_by_simulation(simulation_id)
+            if existing_report and existing_report.status == ReportStatus.COMPLETED:
+                return jsonify({
+                    "success": True,
+                    "data": {
+                        "simulation_id": simulation_id,
+                        "report_id": existing_report.report_id,
+                        "status": "completed",
+                        "progress": 100,
+                        "message": "Report already generated",
+                        "already_completed": True
+                    }
+                })
+
+        if not task_id:
+            return jsonify({
+                "success": False,
+                "error": "Please provide task_id or simulation_id"
+            }), 400
+
+        task_manager = TaskManager()
+        task = task_manager.get_task(task_id)
+
+        if not task:
+            return jsonify({
+                "success": False,
+                "error": f"Task not found: {task_id}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "data": task.to_dict()
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to query task status: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Report retrieval endpoints ==============
+
+@report_bp.route('/<report_id>', methods=['GET'])
+def get_report(report_id: str):
+    """Get a report by ID."""
+    try:
+        Validators.validate_report_id(report_id)
+        report = ReportManager.get_report(report_id)
+
+        if not report:
+            return jsonify({
+                "success": False,
+                "error": f"Report not found: {report_id}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "data": report.to_dict()
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get report: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/by-simulation/<simulation_id>', methods=['GET'])
+def get_report_by_simulation(simulation_id: str):
+    """Get report by simulation ID."""
+    try:
+        Validators.validate_simulation_id(simulation_id)
+        report = ReportManager.get_report_by_simulation(simulation_id)
+
+        if not report:
+            return jsonify({
+                "success": False,
+                "error": f"No report found for simulation: {simulation_id}",
+                "has_report": False
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "data": report.to_dict(),
+            "has_report": True
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get report: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/list', methods=['GET'])
+def list_reports():
+    """
+    List all reports.
+
+    Query parameters:
+        simulation_id: Filter by simulation ID (optional)
+        limit: Max results (default 50)
+    """
+    try:
+        simulation_id = request.args.get('simulation_id')
+        limit = request.args.get('limit', 50, type=int)
+
+        if simulation_id:
+            Validators.validate_simulation_id(simulation_id)
+
+        reports = ReportManager.list_reports(
+            simulation_id=simulation_id,
+            limit=limit
+        )
+
+        return jsonify({
+            "success": True,
+            "data": [r.to_dict() for r in reports],
+            "count": len(reports)
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list reports: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>/download', methods=['GET'])
+def download_report(report_id: str):
+    """Download report as Markdown file."""
+    try:
+        Validators.validate_report_id(report_id)
+        report = ReportManager.get_report(report_id)
+
+        if not report:
+            return jsonify({
+                "success": False,
+                "error": f"Report not found: {report_id}"
+            }), 404
+
+        md_path = ReportManager._get_report_markdown_path(report_id)
+
+        if not os.path.exists(md_path):
+            import tempfile
+            fd, temp_path = tempfile.mkstemp(suffix='.md')
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                    f.write(report.markdown_content)
+                response = send_file(
+                    temp_path,
+                    as_attachment=True,
+                    download_name=f"{report_id}.md"
+                )
+                # Schedule cleanup after response is sent
+                @response.call_on_close
+                def _cleanup():
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
+                return response
+            except BaseException:
+                os.unlink(temp_path)
+                raise
+
+        return send_file(
+            md_path,
+            as_attachment=True,
+            download_name=f"{report_id}.md"
+        )
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to download report: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>', methods=['DELETE'])
+def delete_report(report_id: str):
+    """Delete a report."""
+    try:
+        Validators.validate_report_id(report_id)
+        success = ReportManager.delete_report(report_id)
+
+        if not success:
+            return jsonify({
+                "success": False,
+                "error": f"Report not found: {report_id}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "message": f"Report deleted: {report_id}"
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete report: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Report Agent Q&A endpoint ==============
+
+@report_bp.route('/chat', methods=['POST'])
+def chat_with_report_agent():
+    """
+    Chat with the Report Agent (tool-augmented Q&A).
+
+    Request body (JSON):
+        {
+            "simulation_id": "sim_xxxx",
+            "message": "Your question here",
+            "chat_history": [              // optional
+                {"role": "user", "content": "..."},
+                {"role": "assistant", "content": "..."}
+            ]
+        }
+
+    Returns:
+        {
+            "success": true,
+            "data": {
+                "response": "Agent reply...",
+                "tool_calls": [...],
+                "sources": [...]
+            }
+        }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+
+        simulation_id = data.get('simulation_id')
+        message = data.get('message')
+        chat_history = data.get('chat_history', [])
+
+        if not simulation_id:
+            return jsonify({
+                "success": False,
+                "error": "Please provide simulation_id"
+            }), 400
+
+        Validators.validate_simulation_id(simulation_id)
+
+        if not message:
+            return jsonify({
+                "success": False,
+                "error": "Please provide message"
+            }), 400
+
+        # Get simulation and project info
+        manager = SimulationManager()
+        state = manager.get_simulation(simulation_id)
+
+        if not state:
+            return jsonify({
+                "success": False,
+                "error": f"Simulation not found: {simulation_id}"
+            }), 404
+
+        project = ProjectManager.get_project(state.project_id)
+        if not project:
+            return jsonify({
+                "success": False,
+                "error": f"Project not found: {state.project_id}"
+            }), 404
+
+        graph_id = state.graph_id or project.graph_id
+        if not graph_id:
+            return jsonify({
+                "success": False,
+                "error": "Missing graph ID"
+            }), 400
+
+        simulation_requirement = project.simulation_requirement or ""
+
+        agent = ReportAgent(
+            graph_id=graph_id,
+            simulation_id=simulation_id,
+            simulation_requirement=simulation_requirement
+        )
+
+        result = agent.chat(message=message, chat_history=chat_history)
+
+        return jsonify({
+            "success": True,
+            "data": result
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Chat failed: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Report progress endpoints ==============
+
+@report_bp.route('/<report_id>/progress', methods=['GET'])
+def get_report_progress(report_id: str):
+    """Get report generation progress (section-level detail)."""
+    try:
+        Validators.validate_report_id(report_id)
+        progress = ReportManager.get_progress(report_id)
+
+        if not progress:
+            return jsonify({
+                "success": False,
+                "error": f"No progress info found for report: {report_id}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "data": progress
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get report progress: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>/sections', methods=['GET'])
+def get_report_sections(report_id: str):
+    """Get list of generated sections (streaming output before report completes)."""
+    try:
+        Validators.validate_report_id(report_id)
+        sections = ReportManager.get_generated_sections(report_id)
+
+        report = ReportManager.get_report(report_id)
+        is_complete = report is not None and report.status == ReportStatus.COMPLETED
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "report_id": report_id,
+                "sections": sections,
+                "total_sections": len(sections),
+                "is_complete": is_complete
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get sections: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>/section/<int:section_index>', methods=['GET'])
+def get_single_section(report_id: str, section_index: int):
+    """Get a single section's content."""
+    try:
+        Validators.validate_report_id(report_id)
+        section_path = ReportManager._get_section_path(report_id, section_index)
+
+        if not os.path.exists(section_path):
+            return jsonify({
+                "success": False,
+                "error": f"Section not found: section_{section_index:02d}.md"
+            }), 404
+
+        with open(section_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "filename": f"section_{section_index:02d}.md",
+                "section_index": section_index,
+                "content": content
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get section content: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Report status check endpoint ==============
+
+@report_bp.route('/check/<simulation_id>', methods=['GET'])
+def check_report_status(simulation_id: str):
+    """Check if a simulation has a report and whether Q&A is unlocked."""
+    try:
+        Validators.validate_simulation_id(simulation_id)
+        report = ReportManager.get_report_by_simulation(simulation_id)
+
+        has_report = report is not None
+        report_status = report.status.value if report else None
+        report_id = report.report_id if report else None
+        interview_unlocked = has_report and report.status == ReportStatus.COMPLETED
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "simulation_id": simulation_id,
+                "has_report": has_report,
+                "report_status": report_status,
+                "report_id": report_id,
+                "interview_unlocked": interview_unlocked
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to check report status: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Agent log endpoints ==============
+
+@report_bp.route('/<report_id>/agent-log', methods=['GET'])
+def get_agent_log(report_id: str):
+    """
+    Get Report Agent execution log (structured JSONL).
+
+    Query parameters:
+        from_line: Start reading from this line (optional, default 0)
+    """
+    try:
+        Validators.validate_report_id(report_id)
+        from_line = request.args.get('from_line', 0, type=int)
+        log_data = ReportManager.get_agent_log(report_id, from_line=from_line)
+
+        return jsonify({
+            "success": True,
+            "data": log_data
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get agent log: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>/agent-log/stream', methods=['GET'])
+def stream_agent_log(report_id: str):
+    """Get the complete agent log (all entries)."""
+    try:
+        Validators.validate_report_id(report_id)
+        logs = ReportManager.get_agent_log_stream(report_id)
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "logs": logs,
+                "count": len(logs)
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get agent log: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Console log endpoints ==============
+
+@report_bp.route('/<report_id>/console-log', methods=['GET'])
+def get_console_log(report_id: str):
+    """
+    Get Report Agent console output log (text format).
+
+    Query parameters:
+        from_line: Start reading from this line (optional, default 0)
+    """
+    try:
+        Validators.validate_report_id(report_id)
+        from_line = request.args.get('from_line', 0, type=int)
+        log_data = ReportManager.get_console_log(report_id, from_line=from_line)
+
+        return jsonify({
+            "success": True,
+            "data": log_data
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get console log: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/<report_id>/console-log/stream', methods=['GET'])
+def stream_console_log(report_id: str):
+    """Get the complete console log (all entries)."""
+    try:
+        Validators.validate_report_id(report_id)
+        logs = ReportManager.get_console_log_stream(report_id)
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "logs": logs,
+                "count": len(logs)
+            }
+        })
+
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get console log: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+# ============== Graph tool endpoints (debug) ==============
+
+@report_bp.route('/tools/search', methods=['POST'])
+def search_graph_tool():
+    """
+    Graph search tool endpoint (for debugging).
+
+    Request body (JSON):
+        {
+            "graph_id": "phoring_xxxx",
+            "query": "search query",
+            "limit": 10
+        }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+
+        graph_id = data.get('graph_id')
+        query = data.get('query')
+        limit = data.get('limit', 10)
+
+        if not graph_id or not query:
+            return jsonify({
+                "success": False,
+                "error": "Please provide graph_id and query"
+            }), 400
+
+        from..services.zep_tools import ZepToolsService
+
+        tools = ZepToolsService()
+        result = tools.search_graph(
+            graph_id=graph_id,
+            query=query,
+            limit=limit
+        )
+
+        return jsonify({
+            "success": True,
+            "data": result.to_dict()
+        })
+
+    except Exception as e:
+        logger.error(f"Graph search failed: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
+
+
+@report_bp.route('/tools/statistics', methods=['POST'])
+def get_graph_statistics_tool():
+    """
+    Graph statistics tool endpoint (for debugging).
+
+    Request body (JSON):
+        {
+            "graph_id": "phoring_xxxx"
+        }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+
+        graph_id = data.get('graph_id')
+
+        if not graph_id:
+            return jsonify({
+                "success": False,
+                "error": "Please provide graph_id"
+            }), 400
+
+        from..services.zep_tools import ZepToolsService
+
+        tools = ZepToolsService()
+        result = tools.get_graph_statistics(graph_id)
+
+        return jsonify({
+            "success": True,
+            "data": result
+        })
+
+    except Exception as e:
+        logger.error(f"Failed to get graph statistics: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An internal error occurred. Check server logs for details."
+        }), 500
