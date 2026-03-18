@@ -3,7 +3,7 @@ name = "phoring-backend"
 version = "0.1.0"
 description = "Phoring - A Simple and Universal Swarm Intelligence Engine - Predict Anything"
 requires-python = ">=3.11"
-license = { text = "AGPL-3.0" }
+license = { text = "MIT" }
 authors = [
     { name = "Reeturaj Goswami", email = "info@inbharat.ai" }
 ]

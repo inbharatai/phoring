@@ -6,7 +6,7 @@
 
 ### The World's First Open-Source Decision Intelligence Engine for Scenario Simulation & Predictive Forecasting
 
-[![License](https://img.shields.io/badge/License-AGPL--3.0-2563eb?style=for-the-badge)](./LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-2563eb?style=for-the-badge)](./LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=for-the-badge&logo=python&logoColor=white)](#quick-start)
 [![Backend](https://img.shields.io/badge/Backend-Flask-0f172a?style=for-the-badge&logo=flask)](#architecture)
 [![Frontend](https://img.shields.io/badge/Frontend-Vue_3_+_Vite-22c55e?style=for-the-badge&logo=vuedotjs&logoColor=white)](#architecture)
@@ -460,7 +460,7 @@ If you discover a security vulnerability, please report it responsibly to **info
 
 ## License
 
-Licensed under [AGPL-3.0](./LICENSE).
+Licensed under [MIT](./LICENSE).
 
 ---
 
