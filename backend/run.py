@@ -36,7 +36,7 @@ def main():
     
     # Read runtime configuration.
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
-    port = int(os.environ.get('FLASK_PORT', 5001))
+    port = int(os.environ.get('PORT', os.environ.get('FLASK_PORT', 5001)))
     debug = Config.DEBUG
     
     # Start service.

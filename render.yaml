@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: phoring
+    runtime: docker
+    repo: https://github.com/inbharatai/phoring
+    branch: main
+    plan: standard
+    healthCheckPath: /health
+    disk:
+      name: phoring-uploads
+      mountPath: /app/backend/uploads
+      sizeGB: 1
+    envVars:
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        sync: false
+      - key: LLM_MODEL_NAME
+        sync: false
+      - key: ZEP_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: LLM_VALIDATOR_2_API_KEY
+        sync: false
+      - key: LLM_VALIDATOR_2_BASE_URL
+        sync: false
+      - key: LLM_VALIDATOR_2_MODEL_NAME
+        sync: false
+      - key: LLM_VALIDATOR_3_API_KEY
+        sync: false
+      - key: LLM_VALIDATOR_3_BASE_URL
+        sync: false
+      - key: LLM_VALIDATOR_3_MODEL_NAME
+        sync: false
+      - key: SIMULATION_SPEED_MODE
+        value: normal
+      - key: ENABLE_GEOPOLITICAL_EVENTS
+        value: "true"
+      - key: FLASK_DEBUG
+        value: "False"

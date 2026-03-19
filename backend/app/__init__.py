@@ -174,6 +174,24 @@ def create_app(config_class=Config):
             status['warnings'] = config_errors
         return jsonify(status)
     
+    # --- Serve Vue frontend (production static build) ---
+
+    frontend_dist = os.path.join(os.path.dirname(__file__), '../../frontend/dist')
+    if os.path.isdir(frontend_dist):
+        from flask import send_from_directory
+
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_frontend(path):
+            """Serve Vue SPA; fall back to index.html for client-side routing."""
+            file_path = os.path.join(frontend_dist, path)
+            if path and os.path.isfile(file_path):
+                return send_from_directory(frontend_dist, path)
+            return send_from_directory(frontend_dist, 'index.html')
+
+        if should_log_startup:
+            logger.info(f"Serving frontend from {frontend_dist}")
+
     if should_log_startup:
         logger.info("Phoring Backend initialized successfully")
     

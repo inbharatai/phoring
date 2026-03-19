@@ -1,29 +1,41 @@
-FROM python:3.11
+# ── Stage 1: Build Vue frontend ─────────────────────────────────────────────
+FROM node:20-alpine AS frontend-build
 
-# Install Node.js (>=18) and required tooling
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends nodejs npm \
-  && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# ── Stage 2: Production Python image ───────────────────────────────────────
+FROM python:3.11-slim
 
 # Copy uv from the official uv image
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy dependency manifests first to maximize Docker layer caching
-COPY package.json package-lock.json ./
-COPY frontend/package.json frontend/package-lock.json ./frontend/
+# Install backend Python dependencies
 COPY backend/pyproject.toml backend/uv.lock ./backend/
+RUN cd backend && uv sync --frozen
 
-# Install dependencies (Node + Python)
-RUN npm ci \
-  && npm ci --prefix frontend \
-  && cd backend && uv sync --frozen
+# Copy backend source
+COPY backend/ ./backend/
 
-# Copy project source files
-COPY . .
+# Copy built frontend into backend static serving directory
+COPY --from=frontend-build /build/dist ./frontend/dist
 
-EXPOSE 3000 5001
+# Copy root files needed at runtime
+COPY run.py ./
+COPY .env* ./
 
-# Start frontend and backend together (development mode)
-CMD ["npm", "run", "dev"]
+# Ensure uploads directory exists
+RUN mkdir -p backend/uploads/projects backend/uploads/reports \
+    backend/uploads/simulations backend/uploads/tasks
+
+EXPOSE 10000
+
+# Render uses PORT env var; default to 10000
+ENV PORT=10000
+
+CMD ["sh", "-c", "cd backend && uv run python run.py"]
