@@ -994,30 +994,29 @@ returnJSON format(do notmarkdown):
         # Gather real-world context from web intelligence (best-effort)
         real_context = ""
         web_intel_available = False
+        headlines_for_citation = []
         try:
             from .web_intelligence import NewsScraperService
             svc = NewsScraperService()
             if svc.enabled:
-                # First query: sector-specific news tied to the scenario
-                data = svc.gather_for_entity(
-                    simulation_requirement,
-                    "Scenario",
+                # Use dedicated geopolitical search with focused queries
+                data = svc.search_geopolitical_news(
+                    simulation_requirement=simulation_requirement,
+                    entities=entities,
                     max_articles=5,
-                    context=simulation_requirement,
                 )
                 real_context = (data.get("combined_text", "") or "")[:6000]
-                social_posts = data.get("social_media_posts", [])
-                if social_posts:
-                    social_lines = [
-                        f"[{p.get('platform', 'Social')}] {p.get('snippet', '')[:200]}"
-                        for p in social_posts[:5]
-                    ]
-                    real_context = f"{real_context}\nSocial sentiment: {'; '.join(social_lines)}"
+                headlines_for_citation = data.get("headlines", [])
                 if real_context.strip():
                     web_intel_available = True
-                    logger.info(f"Geopolitical events grounded with {len(real_context)} chars of live context")
+                    logger.info(
+                        f"Geopolitical events grounded with {len(real_context)} chars of live context, "
+                        f"{len(headlines_for_citation)} headlines"
+                    )
                 else:
                     logger.warning("Web intelligence returned empty — events will rely on LLM knowledge only")
+            else:
+                logger.warning("SERPER_API_KEY not loaded — geopolitical events will rely on LLM knowledge only")
         except Exception as e:
             logger.warning(f"Web intelligence unavailable for geopolitical events: {e}")
 
@@ -1045,14 +1044,25 @@ returnJSON format(do notmarkdown):
 
         # Build the real-world grounding block
         if web_intel_available:
+            # Build a headline list the LLM must cite
+            headline_block = ""
+            if headlines_for_citation:
+                hl_lines = "\n".join(f"  - {h}" for h in headlines_for_citation[:10])
+                headline_block = f"""
+## REAL HEADLINES (you MUST base events on these, not fabricate new ones):
+{hl_lines}
+"""
             real_world_block = f"""
 ## CURRENT REAL-WORLD INTELLIGENCE (as of {today_str})
 The following is LIVE data retrieved from news sources and social media. You MUST use
 this to ground your events in reality. Do NOT contradict facts stated here.
 
 {real_context}
-
+{headline_block}
 INSTRUCTIONS FOR USING REAL-WORLD CONTEXT:
+- Each event you generate MUST be based on or inspired by one of the REAL HEADLINES above.
+- In each event description, include a "source_hint" that quotes or paraphrases the real
+  headline it is based on. Example: "...following reports that [Reuters] SEBI tightens margin rules."
 - If the news reports specific ongoing events (e.g., actual trade disputes, actual policy
   changes, actual economic data), base your disruption events on realistic ESCALATIONS
   or CONSEQUENCES of those real events — not fabricated ones.
@@ -1164,6 +1174,9 @@ Return JSON only (no markdown fences):
 
         def _validate_and_filter(raw_events):
             """Return (validated_events, rejected_titles)."""
+            # If we have real headlines, relax the generic filter — an event matching
+            # a real headline is NOT generic even if its title looks simple
+            headline_text_lower = " ".join(headlines_for_citation).lower() if headlines_for_citation else ""
             ok, rejected = [], []
             for evt in raw_events[:4]:
                 title = str(evt.get("title", "Unnamed Event"))[:80]
@@ -1181,9 +1194,17 @@ Return JSON only (no markdown fences):
 
                 is_generic = any(marker in title_lower for marker in GENERIC_TITLE_MARKERS)
                 if is_generic:
-                    logger.warning(f"Filtered generic event (lacks specificity): '{title}'")
-                    rejected.append(title)
-                    continue
+                    # If the topic appears in real headlines, it's grounded — don't reject
+                    title_words = [w for w in title_lower.split() if len(w) > 3]
+                    grounded_in_news = headline_text_lower and any(
+                        word in headline_text_lower for word in title_words
+                    )
+                    if not grounded_in_news:
+                        logger.warning(f"Filtered generic event (lacks specificity): '{title}'")
+                        rejected.append(title)
+                        continue
+                    else:
+                        logger.info(f"Generic-looking event kept (grounded in real headlines): '{title}'")
 
                 trigger = max(1, min(total_rounds, int(evt.get("trigger_round", 1))))
                 impact = max(-1.0, min(1.0, float(evt.get("impact_factor", 0.0))))

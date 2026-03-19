@@ -9,8 +9,9 @@ from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 from ..config import Config
+from ..utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger('phoring.web_intelligence')
 
 FINANCIAL_SOURCES = [
     "site:economictimes.indiatimes.com",
@@ -76,13 +77,15 @@ HEADERS = {
 class NewsScraperService:
     SERPER_URL = "https://google.serper.dev/news"
     SERPER_SEARCH_URL = "https://google.serper.dev/search"
-    NEWS_API_URL = "https://api.newsapi.ai/v2/news/feed"
+    NEWS_API_URL = "https://eventregistry.org/api/v1/article/getArticles"
 
     def __init__(self):
         self.api_key = Config.SERPER_API_KEY
         self.enabled = bool(self.api_key)
         if not self.enabled:
             logger.warning("SERPER_API_KEY not configured — web intelligence disabled")
+        else:
+            logger.info("NewsScraperService initialized with SERPER_API_KEY")
 
     # ---- Search query construction ------------------------------------------------
 
@@ -165,7 +168,7 @@ class NewsScraperService:
         self,
         query: str,
         sources: Optional[List[str]] = None,
-        days_back: int = 60,
+        days_back: int = 7,
         max_results: int = 5,
     ) -> List[Dict]:
         """Call Serper news API. Returns list of {title, url, snippet, source}."""
@@ -173,14 +176,24 @@ class NewsScraperService:
             return []
         site_filter = " OR ".join(sources) if sources else ""
         full_query = f"{query} {site_filter}".strip() if site_filter else query
-        months = max(1, days_back // 30)
-        payload = {"q": full_query, "num": max_results, "tbs": f"qdr:m{months}"}
+        # Use day-level recency for fresh results: d1=24h, d3=3days, d7=week
+        if days_back <= 1:
+            tbs = "qdr:d"
+        elif days_back <= 7:
+            tbs = f"qdr:d{days_back}"
+        elif days_back <= 30:
+            tbs = "qdr:m"
+        else:
+            months = max(1, days_back // 30)
+            tbs = f"qdr:m{months}"
+        payload = {"q": full_query, "num": max_results, "tbs": tbs}
+        logger.info(f"Serper news search: query='{full_query[:80]}', tbs={tbs}, num={max_results}")
         headers = {"X-API-KEY": self.api_key, "Content-Type": "application/json"}
         try:
             resp = requests.post(self.SERPER_URL, json=payload, headers=headers, timeout=10)
             resp.raise_for_status()
             data = resp.json()
-            return [
+            results = [
                 {
                     "title": item.get("title", ""),
                     "url": item.get("link", ""),
@@ -189,8 +202,10 @@ class NewsScraperService:
                 }
                 for item in data.get("news", [])
             ]
+            logger.info(f"Serper returned {len(results)} news results for '{query[:60]}'")
+            return results
         except Exception as e:
-            logger.warning(f"Serper search failed for '{query}': {e}")
+            logger.warning(f"Serper search failed for '{query[:60]}': {e}")
             return []
 
     def search_newsapi(self, query: str, max_results: int = 5) -> List[Dict]:
@@ -203,17 +218,16 @@ class NewsScraperService:
         if not api_key:
             return []
         try:
-            payload = {
-                "query": {
-                    "keyword": query,
-                    "lang": "eng",
-                },
+            params = {
+                "action": "getArticles",
+                "keyword": query,
+                "lang": "eng",
                 "resultType": "articles",
                 "articlesSortBy": "date",
                 "articlesCount": max_results,
                 "apiKey": api_key,
             }
-            resp = requests.post(self.NEWS_API_URL, json=payload, timeout=8)
+            resp = requests.get(self.NEWS_API_URL, params=params, timeout=8)
             resp.raise_for_status()
             data = resp.json()
             articles = data.get("articles", {}).get("results", [])
@@ -297,7 +311,7 @@ class NewsScraperService:
         results = self.search_news(
             query=search_query,
             sources=sources,
-            days_back=60,
+            days_back=7,
             max_results=max_articles + 2,
         )
 
@@ -385,6 +399,141 @@ class NewsScraperService:
             "articles": articles,
             "combined_text": "\n\n---\n\n".join(parts)[:12000],
             "social_media_posts": social_posts,
+        }
+
+    def search_geopolitical_news(
+        self,
+        simulation_requirement: str,
+        entities: Optional[List] = None,
+        max_articles: int = 5,
+    ) -> Dict:
+        """Dedicated geopolitical news fetcher with focused, short queries.
+
+        Instead of dumping the full simulation requirement as a search query,
+        this builds 2-3 targeted searches:
+        1. Sector/topic + "latest news today"
+        2. Top entity names + "news"
+        3. Event Registry as a secondary source
+
+        Returns same structure as gather_for_entity().
+        """
+        if not self.enabled:
+            logger.warning("Geopolitical news search skipped — SERPER_API_KEY not set")
+            return {"articles": [], "combined_text": "", "headlines": []}
+
+        logger.info("Starting geopolitical news search for simulation grounding")
+
+        # Build focused queries from the requirement text
+        key_phrases = self._extract_key_phrases(simulation_requirement, max_phrases=4)
+        entity_names = []
+        if entities:
+            entity_names = [
+                getattr(e, 'name', str(e))[:50]
+                for e in entities[:6]
+                if hasattr(e, 'name')
+            ]
+
+        queries = []
+        # Query 1: Key topic phrases + "latest news"
+        if key_phrases:
+            topic_query = " ".join(key_phrases[:3]) + " latest news today"
+            queries.append(topic_query)
+        else:
+            # Fallback: first 8 meaningful words from requirement
+            words = [w for w in simulation_requirement.split() if len(w) > 3][:8]
+            queries.append(" ".join(words) + " news today")
+
+        # Query 2: Top entity names + breaking news
+        if entity_names:
+            entity_query = " ".join(entity_names[:3]) + " breaking news"
+            queries.append(entity_query)
+
+        # Query 3: Sector-specific search if financial entities detected
+        sector_words = [
+            p for p in key_phrases
+            if any(kw in p.lower() for kw in [
+                "stock", "market", "bank", "trade", "tariff", "economy",
+                "oil", "crypto", "currency", "commodity", "inflation",
+                "interest rate", "monetary", "fiscal", "regulation",
+            ])
+        ]
+        if sector_words:
+            queries.append(f"{' '.join(sector_words[:2])} policy regulation news this week")
+
+        all_results = []
+        seen_urls = set()
+        for q in queries[:3]:
+            # Use GLOBAL_SOURCES for geopolitical news (Reuters, BBC, Bloomberg, etc.)
+            results = self.search_news(
+                query=q,
+                sources=GLOBAL_SOURCES,
+                days_back=7,
+                max_results=max_articles,
+            )
+            for r in results:
+                if r["url"] not in seen_urls:
+                    all_results.append(r)
+                    seen_urls.add(r["url"])
+
+            # Also run unrestricted search to catch non-mainstream sources
+            unrestricted = self.search_news(
+                query=q,
+                sources=None,
+                days_back=7,
+                max_results=3,
+            )
+            for r in unrestricted:
+                if r["url"] not in seen_urls:
+                    all_results.append(r)
+                    seen_urls.add(r["url"])
+
+        # Secondary: Event Registry fills gaps
+        if len(all_results) < max_articles:
+            er_query = " ".join(key_phrases[:3]) if key_phrases else simulation_requirement[:100]
+            newsapi_results = self.search_newsapi(query=er_query, max_results=max_articles)
+            for r in newsapi_results:
+                if r["url"] not in seen_urls:
+                    all_results.append(r)
+                    seen_urls.add(r["url"])
+
+        # Scrape article bodies and build output
+        articles = []
+        headlines = []
+        for item in all_results:
+            if len(articles) >= max_articles:
+                break
+            url = item.get("url", "")
+            if not url:
+                continue
+            title = item.get("title", "")
+            source = item.get("source", "")
+            headlines.append(f"[{source}] {title}")
+            snippet = item.get("snippet", "")
+            body = snippet if len(snippet) > 200 else self.scrape_article(url)
+            text = body if body else snippet
+            if text:
+                articles.append({
+                    "title": title,
+                    "source": source,
+                    "url": url,
+                    "text": text[:self.ARTICLE_BODY_LIMIT],
+                    "type": "news",
+                })
+            time.sleep(0.3)
+
+        logger.info(
+            f"Geopolitical news search complete: {len(articles)} articles, "
+            f"{len(headlines)} headlines from {len(queries)} queries"
+        )
+
+        if not articles:
+            return {"articles": [], "combined_text": "", "headlines": headlines}
+
+        parts = [f"[{a['source']}] {a['title']}\n{a['text']}" for a in articles]
+        return {
+            "articles": articles,
+            "combined_text": "\n\n---\n\n".join(parts)[:12000],
+            "headlines": headlines,
         }
 
     def search_social_media(
