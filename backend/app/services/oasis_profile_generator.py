@@ -16,8 +16,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from openai import OpenAI
-from zep_cloud.client import Zep
 
 from..config import Config
 from..utils.logger import get_logger
@@ -189,6 +187,7 @@ class OasisProfileGenerator:
         if not self.api_key:
             raise ValueError("LLM_API_KEY not yet configured")
         
+        from openai import OpenAI
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url
@@ -201,6 +200,7 @@ class OasisProfileGenerator:
         
         if self.zep_api_key:
             try:
+                from zep_cloud.client import Zep
                 self.zep_client = Zep(api_key=self.zep_api_key)
             except Exception as e:
                 logger.warning(f"Zep client initialization failed: {e}")

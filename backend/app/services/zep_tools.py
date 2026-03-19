@@ -13,8 +13,6 @@ import json
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
-from zep_cloud.client import Zep
-
 from..config import Config
 from..utils.logger import get_logger
 from..utils.llm_client import LLMClient
@@ -426,6 +424,7 @@ class ZepToolsService:
         if not self.api_key:
             raise ValueError("ZEP_API_KEY not yet configured")
         
+        from zep_cloud.client import Zep
         self.client = Zep(api_key=self.api_key)
         # Use LLM client for InsightForge generation
         self._llm_client = llm_client

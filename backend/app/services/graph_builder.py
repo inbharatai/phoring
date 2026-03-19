@@ -9,9 +9,6 @@ import threading
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
 
-from zep_cloud.client import Zep
-from zep_cloud import EpisodeData, EntityEdgeSourceTarget
-
 from..config import Config
 from..models.task import TaskManager, TaskStatus
 from..utils.zep_paging import fetch_all_nodes, fetch_all_edges
@@ -43,6 +40,7 @@ class GraphBuilderService:
         if not self.api_key:
             raise ValueError("ZEP_API_KEY not yet configured")
         
+        from zep_cloud.client import Zep
         self.client = Zep(api_key=self.api_key)
         self.task_manager = TaskManager()
     
@@ -261,6 +259,7 @@ class GraphBuilderService:
             
             # Build source_targets
             source_targets = []
+            from zep_cloud import EntityEdgeSourceTarget
             for st in edge_def.get("source_targets", []):
                 source_targets.append(
                     EntityEdgeSourceTarget(
@@ -304,6 +303,7 @@ class GraphBuilderService:
                 )
             
             # Build episode data
+            from zep_cloud import EpisodeData
             episodes = [
                 EpisodeData(data=chunk, type="text")
                 for chunk in batch_chunks

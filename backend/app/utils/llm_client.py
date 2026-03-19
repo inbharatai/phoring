@@ -6,7 +6,6 @@ Provides OpenAI-format API calls.
 import json
 import re
 from typing import Optional, Dict, Any, List
-from openai import OpenAI
 
 from..config import Config
 from.retry import retry_with_backoff
@@ -87,6 +86,7 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("LLM_API_KEY not yet configured")
         
+        from openai import OpenAI
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url

@@ -21,8 +21,6 @@ from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 
-from openai import OpenAI
-
 from..config import Config
 from..utils.logger import get_logger
 from.zep_entity_reader import EntityNode, ZepEntityReader
@@ -265,6 +263,7 @@ class SimulationConfigGenerator:
         if not self.api_key:
             raise ValueError("LLM_API_KEY not yet configured")
         
+        from openai import OpenAI
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url

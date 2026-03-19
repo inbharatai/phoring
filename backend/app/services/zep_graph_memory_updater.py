@@ -10,8 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from queue import Queue, Empty
 
-from zep_cloud.client import Zep
-
 from..config import Config
 from..utils.logger import get_logger
 
@@ -241,6 +239,7 @@ class ZepGraphMemoryUpdater:
         if not self.api_key:
             raise ValueError("ZEP_API_KEY not yet configured")
         
+        from zep_cloud.client import Zep
         self.client = Zep(api_key=self.api_key)
         
         # Activity queue
