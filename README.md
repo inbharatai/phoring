@@ -15,7 +15,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#quick-start)
 [![Status](https://img.shields.io/badge/Status-Early_Stage-f59e0b?style=for-the-badge)](#project-status)
 
-**From raw documents to simulation-backed decisions — with live intelligence, multi-AI consensus, and source-cited forecasts.**
+**From documents to simulation-backed forecasts — with knowledge graphs, multi-agent simulation, and source-cited reports.**
 
 [Quick Start](#quick-start) · [Architecture](#architecture) · [API Reference](#api-surface) · [Roadmap](#roadmap)
 
@@ -27,7 +27,7 @@
 
 Phoring is an **open-source decision intelligence platform** that transforms unstructured documents into executable multi-agent social simulations and delivers source-cited predictive reports.
 
-You define a scenario in plain language and upload supporting documents. Phoring extracts a knowledge graph from those documents, builds realistic agent profiles, enriches the simulation with live news context, runs a multi-agent social dynamics simulation via [OASIS](https://github.com/camel-ai/oasis), and produces a structured report with inline citations and optional multi-model consensus validation.
+You define a scenario in plain language and upload supporting documents. Phoring extracts a knowledge graph from those documents, generates agent profiles, enriches the simulation with web-sourced news context, runs a multi-agent social dynamics simulation via [OASIS](https://github.com/camel-ai/oasis), and produces a structured report with inline citations and optional multi-model consensus validation.
 
 ```
 Documents + Scenario Objective
@@ -55,7 +55,7 @@ Documents + Scenario Objective
 - Multi-agent social dynamics simulation output (Twitter and Reddit platforms)
 - A source-cited report with confidence scoring, optional multi-AI consensus validation, and interactive Q&A
 
-> _"Upload a document, describe a scenario, and get a fully sourced prediction report validated by multiple AI models."_
+> _"Upload a document, describe a scenario, and get a source-cited prediction report — with optional multi-model validation."_
 
 ---
 
@@ -63,7 +63,7 @@ Documents + Scenario Objective
 
 | Problem | What Phoring Does |
 |---|---|
-| Strategic decisions rely on static documents | Converts documents into dynamic simulation inputs enriched with live web data |
+| Strategic decisions rely on static documents | Converts documents into dynamic simulation inputs enriched with web-sourced context |
 | Scenario intent gets lost between pipeline stages | Propagates `simulation_requirement` across graph build, agent profiles, config, and report |
 | Simulations lack real-world context | Enriches agent context with news articles scraped at 4,000+ characters and search-indexed social content |
 | Reports are hard to trust | Produces Perplexity-style inline source citations `[1][2][3]` with a full references section |
@@ -147,7 +147,7 @@ Uploaded documents are parsed (PDF, Markdown, plain text), chunked, and fed to a
 Graph entities are converted into structured OASIS agent profiles — complete with persona, bio, MBTI, profession, interested topics, and platform-specific attributes (follower count, karma, etc.). The profile generator distinguishes individual agents from abstract or group entities and assigns stance-aware behavioral parameters aligned to the simulation objective.
 
 ### Web Intelligence Enrichment
-Before simulation, the platform fetches live context via:
+Before simulation, the platform fetches web context via:
 
 | Source | How It Works |
 |---|---|

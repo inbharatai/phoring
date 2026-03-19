@@ -16,19 +16,19 @@
     <main class="main-grid">
       <section class="hero-card panel reveal-1">
         <div class="hero-copy">
-          <p class="eyebrow">Predictive Intelligence Engine</p>
-          <h1>Simulate tomorrow before the world gets there.</h1>
+          <p class="eyebrow">Open-Source Decision Intelligence</p>
+          <h1>From documents to simulation-backed forecasts.</h1>
           <p class="subtitle">
-            Upload documents and define a scenario — Phoring extracts entities, scrapes live news and six social platforms,
-            builds a knowledge graph, runs a dual-platform agent simulation with geopolitical disruptions,
-            then delivers a source-cited, confidence-scored forecast validated by multi-AI consensus.
+            Upload source documents, define a scenario, and let Phoring build a knowledge graph,
+            enrich it with web context, run a multi-agent social simulation via OASIS,
+            and generate a structured report with inline source citations.
           </p>
           <div class="hero-badges">
             <span>Source-Cited Reports</span>
-            <span>Multi-AI Consensus</span>
+            <span>Knowledge Graph</span>
             <span>Confidence Scoring</span>
-            <span>Live Web &amp; Social</span>
-            <span>OASIS Dual-Platform Sim</span>
+            <span>OASIS Simulation</span>
+            <span>Early Stage</span>
           </div>
         </div>
         <div class="hero-logo-wrap">
@@ -37,34 +37,34 @@
       </section>
 
       <section class="pipeline-card panel reveal-2">
-        <h2>Prediction Pipeline</h2>
+        <h2>How It Works</h2>
         <div class="pipeline-list">
           <article>
             <span>01</span>
             <div>
               <h3>Graph Build</h3>
-              <p>Extract entities, map relationships with domain-specific ontology types, and initialize the Zep knowledge graph.</p>
+              <p>Upload documents (PDF, MD, TXT). Phoring extracts entities, maps relationships, and builds a knowledge graph in Zep.</p>
             </div>
           </article>
           <article>
             <span>02</span>
             <div>
-              <h3>Environment Setup</h3>
-              <p>Generate ground-truth-validated personas with stance-aware behavioral priors and randomized interaction profiles.</p>
+              <h3>Agent Setup</h3>
+              <p>LLM-generated agent profiles are created from graph entities — each with persona, stance, and platform-specific attributes.</p>
             </div>
           </article>
           <article>
             <span>03</span>
             <div>
-              <h3>Dual-Platform Simulation</h3>
-              <p>Run parallel Twitter/X and Reddit dynamics with geopolitical event injection and echo-chamber prevention.</p>
+              <h3>Simulation</h3>
+              <p>OASIS runs a synthetic multi-agent simulation across simulated Twitter and Reddit environments, enriched with web-sourced context.</p>
             </div>
           </article>
           <article>
             <span>04</span>
             <div>
-              <h3>Forecast Report</h3>
-              <p>Source-cited predictions with inline references, confidence scoring, and multi-AI consensus validation.</p>
+              <h3>Report</h3>
+              <p>A structured, source-cited report with confidence scoring and optional multi-model consensus validation.</p>
             </div>
           </article>
         </div>
@@ -72,9 +72,9 @@
 
       <section class="features-card panel reveal-3">
         <div class="fc-header">
-          <p class="eyebrow">How we generate outcomes</p>
-          <h2>Intelligence Pipeline</h2>
-          <p class="fc-sub">Your document and prompt drive a live intelligence chain — entity-scoped web and social scraping, a persistent knowledge graph, dual-platform agent simulation with geopolitical disruptions, and a forecast report with inline source citations, confidence scoring, and multi-AI cross-validation.</p>
+          <p class="eyebrow">What Powers the Output</p>
+          <h2>Core Capabilities</h2>
+          <p class="fc-sub">Each stage of the pipeline is a discrete, inspectable step — from document parsing and knowledge graph construction, through web context enrichment, to multi-agent simulation and report generation with inline citations.</p>
         </div>
 
         <!-- Animated pipeline flow -->
@@ -96,7 +96,7 @@
           <div class="pf-rail"><div class="pf-bead" style="--delay:1s"></div></div>
           <div class="pf-node">
             <div class="pf-circle">04</div>
-            <span class="pf-lbl">Social Signals</span>
+            <span class="pf-lbl">Web Context</span>
           </div>
           <div class="pf-rail"><div class="pf-bead" style="--delay:1.5s"></div></div>
           <div class="pf-node">
@@ -118,46 +118,45 @@
         <div class="feature-grid">
           <article>
             <div class="fg-icon-row">
-              <span class="fg-tag">SEARCH</span>
-              <h3>Live Web &amp; News Intelligence</h3>
+              <span class="fg-tag">GRAPH</span>
+              <h3>Knowledge Graph Construction</h3>
             </div>
-            <p>Entity-formed queries hit Google News via Serper and newsapi.ai. Full article bodies are scraped — up to 4,000 characters of real-world context per entity — so agents and the report writer operate on facts, not just headlines.</p>
-                      <p>Entity-formed queries hit Google News via Serper and newsapi.ai. Full article bodies are scraped — up to 4,000 characters per article, 12,000 characters of combined live context across news and social sources — so agents and the report writer operate on facts, not just headlines.</p>
+            <p>Documents are parsed, chunked, and processed by an LLM-driven ontology generator. Entities, relationships, and domain concepts are stored as a graph in Zep Cloud — used downstream for agent profiles, simulation context, and report Q&amp;A.</p>
           </article>
           <article>
             <div class="fg-icon-row">
-              <span class="fg-tag">SOCIAL</span>
-              <h3>Cross-Platform Social Mining</h3>
+              <span class="fg-tag">SEARCH</span>
+              <h3>Web &amp; News Enrichment</h3>
             </div>
-            <p>Real public posts from Reddit, Twitter/X, Facebook, Instagram, LinkedIn, and TikTok are harvested per platform, deduplicated, and tagged as behavioral priors — clearly distinguished from synthetic seed content via [SEED] markers.</p>
+            <p>Entity-scoped queries via Serper and NewsAPI retrieve relevant articles (scraped up to 4,000 chars each). Social platform content is sourced via Google Search indexing — not direct API access. Coverage depends on what Google has indexed.</p>
           </article>
           <article>
             <div class="fg-icon-row">
               <span class="fg-tag">SIM</span>
-              <h3>Stance-Aware Dual Simulation</h3>
+              <h3>Multi-Agent Simulation</h3>
             </div>
-            <p>OASIS Twitter/X and Reddit environments run in parallel with echo-chamber prevention — agents receive stance-aware context so bulls see bearish signals and vice versa. Geopolitical disruption events inject region-specific shocks mid-simulation.</p>
+            <p>OASIS spawns synthetic Twitter and Reddit environments where LLM-generated agents interact based on their assigned personas, stances, and behavioral parameters. Actions and round summaries are streamed back in real time.</p>
           </article>
           <article>
             <div class="fg-icon-row">
               <span class="fg-tag">CITE</span>
-              <h3>Source-Cited Forecasts</h3>
+              <h3>Source-Cited Reports</h3>
             </div>
-            <p>Every claim in the report is backed by inline numbered references [1][2][3] linking to the original news articles, social posts, and data sources — just like Perplexity. A full Sources &amp; References section is appended at the end.</p>
+            <p>The Report Agent generates structured output in a ReACT loop, pulling from the knowledge graph, web intelligence, and simulation results. Claims are backed by inline numbered references [1][2][3] with a full sources section.</p>
           </article>
           <article>
             <div class="fg-icon-row">
               <span class="fg-tag">SCORE</span>
               <h3>Confidence Scoring</h3>
             </div>
-            <p>Every prediction is tagged [HIGH], [MEDIUM], or [LOW] based on evidence density — HIGH requires 3+ independent data points from different tools. Empty or error tool results automatically lower confidence instead of triggering fabrication.</p>
+            <p>Each report section is tagged [HIGH], [MEDIUM], or [LOW] based on how many independent tool-sourced data points support it. This reflects evidence density — not a guarantee of factual accuracy.</p>
           </article>
           <article>
             <div class="fg-icon-row">
               <span class="fg-tag">VERIFY</span>
-              <h3>Multi-AI Consensus Validation</h3>
+              <h3>Multi-Model Consensus (Optional)</h3>
             </div>
-            <p>The finished report is cross-validated by multiple AI models that independently assess factual accuracy, logical consistency, and prediction plausibility. A consensus score and divergence notes are appended to the final output.</p>
+            <p>When configured, up to 3 independent LLM validators score predictions on coherence, precedent, and risk. A consensus summary is appended to the report. Requires additional API keys (e.g. Claude, Gemini).</p>
           </article>
         </div>
 
@@ -171,16 +170,48 @@
           <span class="ts-sep">·</span>
           <span class="ts-chip ts-plain">Serper</span>
           <span class="ts-sep">·</span>
-          <span class="ts-chip ts-plain">newsapi.ai</span>
+          <span class="ts-chip ts-plain">NewsAPI</span>
           <span class="ts-sep">·</span>
           <span class="ts-chip ts-plain">OpenAI</span>
         </div>
       </section>
 
-      <section class="workbench panel reveal-4">
+      <section class="status-card panel reveal-4">
+        <div class="status-header">
+          <p class="eyebrow">Transparency</p>
+          <h2>Current Status</h2>
+        </div>
+        <div class="status-grid">
+          <div class="status-col">
+            <h3>What works today</h3>
+            <ul>
+              <li>Document-to-knowledge-graph pipeline (Zep Cloud)</li>
+              <li>LLM-driven ontology extraction and agent profile generation</li>
+              <li>OASIS multi-agent simulation (synthetic Twitter + Reddit)</li>
+              <li>Web enrichment via Serper and NewsAPI</li>
+              <li>Source-cited report generation with confidence tags</li>
+              <li>Interactive post-report Q&amp;A</li>
+              <li>Input validation, XSS protection, atomic file writes</li>
+            </ul>
+          </div>
+          <div class="status-col">
+            <h3>Known limitations</h3>
+            <ul>
+              <li>Flat JSON file storage — no database backend yet</li>
+              <li>No authentication — local or trusted-network use only</li>
+              <li>Social content sourced via Google Search indexing, not platform APIs</li>
+              <li>Single-process Flask — not designed for high concurrency</li>
+              <li>Confidence scores reflect evidence density, not factual accuracy</li>
+              <li>Multi-model consensus requires manually configured API keys</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="workbench panel reveal-5">
         <div class="workbench-head">
-          <h2>Start New Simulation</h2>
-          <p>Upload files and define your scenario to launch a full prediction run.</p>
+          <h2>New Simulation</h2>
+          <p>Upload source documents and describe your scenario to begin.</p>
         </div>
 
         <div
@@ -231,12 +262,12 @@
 
         <button class="launch-btn" @click="startSimulation" :disabled="!canSubmit || loading">
           <span v-if="loading">Initializing...</span>
-          <span v-else>Launch Prediction Engine</span>
+          <span v-else>Start Simulation</span>
         </button>
       </section>
     </main>
 
-    <section class="history-wrap reveal-5">
+    <section class="history-wrap reveal-6">
       <HistoryDatabase />
     </section>
   </div>
@@ -934,7 +965,8 @@ a.ts-chip:hover {
 .reveal-2,
 .reveal-3,
 .reveal-4,
-.reveal-5 {
+.reveal-5,
+.reveal-6 {
   animation: reveal 0.55s ease both;
 }
 
@@ -952,6 +984,10 @@ a.ts-chip:hover {
 
 .reveal-5 {
   animation-delay: 0.24s;
+}
+
+.reveal-6 {
+  animation-delay: 0.30s;
 }
 
 @keyframes reveal {
@@ -983,6 +1019,65 @@ a.ts-chip:hover {
   100% { left: calc(100% + 6px); opacity: 0; }
 }
 
+/* ── Status / transparency section ────────────────── */
+.status-card {
+  grid-column: 1 / 3;
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.status-header {
+  margin-bottom: 18px;
+}
+
+.status-header h2 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.status-col h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.status-col ul {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.status-col ul li {
+  font-size: 0.84rem;
+  color: rgba(16, 20, 31, 0.72);
+  line-height: 1.5;
+  padding-left: 14px;
+  position: relative;
+}
+
+.status-col ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.status-col:last-child ul li::before {
+  background: var(--coral);
+}
+
 @media (max-width: 980px) {
   .main-grid {
     grid-template-columns: 1fr;
@@ -991,8 +1086,13 @@ a.ts-chip:hover {
   .hero-card,
   .pipeline-card,
   .features-card,
+  .status-card,
   .workbench {
     grid-column: 1 / 2;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
   }
 
   .feature-grid {
