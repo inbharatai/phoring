@@ -27,7 +27,6 @@ COPY --from=frontend-build /build/dist ./frontend/dist
 
 # Copy root files needed at runtime
 COPY run.py ./
-COPY .env* ./
 
 # Ensure uploads directory exists
 RUN mkdir -p backend/uploads/projects backend/uploads/reports \
