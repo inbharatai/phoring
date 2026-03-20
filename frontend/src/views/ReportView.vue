@@ -333,9 +333,12 @@ onMounted(() => {
   background: #CCC;
 }
 
-.status-indicator.processing.dot { background: #FF9800; animation: pulse 1s infinite; }
-.status-indicator.completed.dot { background: #4CAF50; }
-.status-indicator.error.dot { background: #F44336; }
+.status-indicator.processing .dot { background: #4CAF50; animation: pulse 1s infinite; }
+.status-indicator.processing { color: #4CAF50; }
+.status-indicator.completed .dot { background: #4CAF50; }
+.status-indicator.completed { color: #4CAF50; }
+.status-indicator.error .dot { background: #F44336; }
+.status-indicator.error { color: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
