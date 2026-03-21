@@ -224,6 +224,64 @@ class SimulationRunner:
     _graph_memory_enabled: Dict[str, bool] = {}  # simulation_id -> enabled
     
     @classmethod
+    def recover_orphaned_simulations(cls):
+        """Mark simulations stuck in running/starting as failed after a restart.
+
+        On startup the subprocess references are lost, so any run_state.json
+        with an active status represents a zombie simulation.  This scans
+        every simulation directory and transitions those states to FAILED.
+        """
+        sim_root = cls.RUN_STATE_DIR
+        if not os.path.isdir(sim_root):
+            return
+
+        recovered = 0
+        now = datetime.now().isoformat()
+        for sim_id in os.listdir(sim_root):
+            sim_dir = os.path.join(sim_root, sim_id)
+            if not os.path.isdir(sim_dir):
+                continue
+
+            # --- run_state.json (runtime state) ---
+            run_state_file = os.path.join(sim_dir, "run_state.json")
+            if os.path.isfile(run_state_file):
+                try:
+                    with open(run_state_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    status = data.get("runner_status", "idle")
+                    if status in ("running", "starting"):
+                        data["runner_status"] = "failed"
+                        data["error"] = "Server restarted while simulation was running"
+                        data["completed_at"] = now
+                        data["updated_at"] = now
+                        data["twitter_running"] = False
+                        data["reddit_running"] = False
+                        with open(run_state_file, 'w', encoding='utf-8') as f:
+                            json.dump(data, f, ensure_ascii=False, indent=2)
+                        recovered += 1
+                        logger.info(f"Recovered orphaned simulation {sim_id} → failed")
+                except Exception as e:
+                    logger.warning(f"Could not recover run_state for {sim_id}: {e}")
+
+            # --- state.json (preparation/lifecycle state) ---
+            state_file = os.path.join(sim_dir, "state.json")
+            if os.path.isfile(state_file):
+                try:
+                    with open(state_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    if data.get("status") == "running":
+                        data["status"] = "failed"
+                        data["error"] = "Server restarted while simulation was running"
+                        data["updated_at"] = now
+                        with open(state_file, 'w', encoding='utf-8') as f:
+                            json.dump(data, f, ensure_ascii=False, indent=2)
+                except Exception as e:
+                    logger.warning(f"Could not recover state for {sim_id}: {e}")
+
+        if recovered:
+            logger.info(f"Recovered {recovered} orphaned simulation(s)")
+
+    @classmethod
     def get_run_state(cls, simulation_id: str) -> Optional[SimulationRunState]:
         """Return runtime state from cache or disk."""
         if simulation_id in cls._run_states:

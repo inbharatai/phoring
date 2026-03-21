@@ -48,6 +48,7 @@ def create_app(config_class=Config):
     # Simulation process cleanup
     from.services.simulation_runner import SimulationRunner
     SimulationRunner.register_cleanup()
+    SimulationRunner.recover_orphaned_simulations()
 
     # Register atexit handler to mark in-flight tasks as failed on shutdown
     import atexit
