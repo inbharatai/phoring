@@ -225,61 +225,133 @@ class SimulationRunner:
     
     @classmethod
     def recover_orphaned_simulations(cls):
-        """Mark simulations stuck in running/starting as failed after a restart.
+        """Auto-restart simulations that were interrupted by a backend restart.
 
         On startup the subprocess references are lost, so any run_state.json
         with an active status represents a zombie simulation.  This scans
-        every simulation directory and transitions those states to FAILED.
+        every simulation directory, cleans up stale artifacts, and relaunches
+        the simulation using the saved ``run_params.json``.
+
+        If ``run_params.json`` is missing (old runs before this feature), the
+        simulation is marked as failed instead.
         """
         sim_root = cls.RUN_STATE_DIR
         if not os.path.isdir(sim_root):
             return
 
-        recovered = 0
+        restarted = 0
+        failed = 0
         now = datetime.now().isoformat()
+
         for sim_id in os.listdir(sim_root):
             sim_dir = os.path.join(sim_root, sim_id)
             if not os.path.isdir(sim_dir):
                 continue
 
-            # --- run_state.json (runtime state) ---
+            # Check run_state.json for active status
             run_state_file = os.path.join(sim_dir, "run_state.json")
-            if os.path.isfile(run_state_file):
-                try:
-                    with open(run_state_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    status = data.get("runner_status", "idle")
-                    if status in ("running", "starting"):
-                        data["runner_status"] = "failed"
-                        data["error"] = "Server restarted while simulation was running"
-                        data["completed_at"] = now
-                        data["updated_at"] = now
-                        data["twitter_running"] = False
-                        data["reddit_running"] = False
-                        with open(run_state_file, 'w', encoding='utf-8') as f:
-                            json.dump(data, f, ensure_ascii=False, indent=2)
-                        recovered += 1
-                        logger.info(f"Recovered orphaned simulation {sim_id} → failed")
-                except Exception as e:
-                    logger.warning(f"Could not recover run_state for {sim_id}: {e}")
+            if not os.path.isfile(run_state_file):
+                continue
 
-            # --- state.json (preparation/lifecycle state) ---
-            state_file = os.path.join(sim_dir, "state.json")
-            if os.path.isfile(state_file):
+            try:
+                with open(run_state_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                status = data.get("runner_status", "idle")
+                if status not in ("running", "starting"):
+                    continue
+            except Exception:
+                continue
+
+            # This simulation was interrupted.  Try to restart it.
+            run_params_file = os.path.join(sim_dir, "run_params.json")
+            config_file = os.path.join(sim_dir, "simulation_config.json")
+
+            if os.path.isfile(run_params_file) and os.path.isfile(config_file):
                 try:
-                    with open(state_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    if data.get("status") == "running":
-                        data["status"] = "failed"
-                        data["error"] = "Server restarted while simulation was running"
-                        data["updated_at"] = now
+                    with open(run_params_file, 'r', encoding='utf-8') as f:
+                        params = json.load(f)
+
+                    # Clean up stale run artifacts so start_simulation can proceed
+                    cls.cleanup_simulation_logs(sim_id)
+
+                    # Reset the preparation-level state to READY
+                    state_file = os.path.join(sim_dir, "state.json")
+                    if os.path.isfile(state_file):
+                        with open(state_file, 'r', encoding='utf-8') as f:
+                            sdata = json.load(f)
+                        if sdata.get("status") == "running":
+                            sdata["status"] = "ready"
+                            sdata["updated_at"] = now
+                            sdata["error"] = None
+                            with open(state_file, 'w', encoding='utf-8') as f:
+                                json.dump(sdata, f, ensure_ascii=False, indent=2)
+
+                    # Relaunch
+                    cls.start_simulation(
+                        simulation_id=sim_id,
+                        platform=params.get("platform", "parallel"),
+                        max_rounds=params.get("max_rounds"),
+                        enable_graph_memory_update=params.get("enable_graph_memory_update", False),
+                        graph_id=params.get("graph_id"),
+                    )
+
+                    # Mark lifecycle state as running again
+                    if os.path.isfile(state_file):
+                        with open(state_file, 'r', encoding='utf-8') as f:
+                            sdata = json.load(f)
+                        sdata["status"] = "running"
+                        sdata["updated_at"] = datetime.now().isoformat()
                         with open(state_file, 'w', encoding='utf-8') as f:
-                            json.dump(data, f, ensure_ascii=False, indent=2)
-                except Exception as e:
-                    logger.warning(f"Could not recover state for {sim_id}: {e}")
+                            json.dump(sdata, f, ensure_ascii=False, indent=2)
 
-        if recovered:
-            logger.info(f"Recovered {recovered} orphaned simulation(s)")
+                    restarted += 1
+                    logger.info(f"Auto-restarted orphaned simulation {sim_id}")
+                    continue
+
+                except Exception as e:
+                    logger.warning(f"Failed to restart simulation {sim_id}: {e}")
+                    # Fall through to mark as failed
+
+            # No run_params or restart failed — mark as failed
+            cls._mark_simulation_failed(sim_dir, sim_id, run_state_file, now)
+            failed += 1
+
+        if restarted or failed:
+            logger.info(
+                f"Orphan recovery: {restarted} restarted, {failed} marked failed"
+            )
+
+    @classmethod
+    def _mark_simulation_failed(cls, sim_dir, sim_id, run_state_file, now):
+        """Mark a single orphaned simulation as failed on disk."""
+        try:
+            with open(run_state_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            data["runner_status"] = "failed"
+            data["error"] = "Server restarted while simulation was running"
+            data["completed_at"] = now
+            data["updated_at"] = now
+            data["twitter_running"] = False
+            data["reddit_running"] = False
+            with open(run_state_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning(f"Could not mark run_state failed for {sim_id}: {e}")
+
+        state_file = os.path.join(sim_dir, "state.json")
+        if os.path.isfile(state_file):
+            try:
+                with open(state_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if data.get("status") == "running":
+                    data["status"] = "failed"
+                    data["error"] = "Server restarted while simulation was running"
+                    data["updated_at"] = now
+                    with open(state_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                logger.warning(f"Could not mark state failed for {sim_id}: {e}")
+        logger.info(f"Marked orphaned simulation {sim_id} as failed")
 
     @classmethod
     def get_run_state(cls, simulation_id: str) -> Optional[SimulationRunState]:
@@ -421,6 +493,18 @@ class SimulationRunner:
         )
         
         cls._save_run_state(state)
+        
+        # Persist launch params so the simulation can be auto-restarted after
+        # an unexpected backend restart (OOM, deploy, etc.).
+        run_params = {
+            "platform": platform,
+            "max_rounds": max_rounds,
+            "enable_graph_memory_update": enable_graph_memory_update,
+            "graph_id": graph_id,
+        }
+        run_params_path = os.path.join(sim_dir, "run_params.json")
+        with open(run_params_path, 'w', encoding='utf-8') as f:
+            json.dump(run_params, f, ensure_ascii=False, indent=2)
         
         # If graph update is enabled, create the updater
         if enable_graph_memory_update:
