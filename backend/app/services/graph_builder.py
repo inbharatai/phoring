@@ -12,7 +12,10 @@ from dataclasses import dataclass
 from..config import Config
 from..models.task import TaskManager, TaskStatus
 from..utils.zep_paging import fetch_all_nodes, fetch_all_edges
+from..utils.logger import get_logger
 from.text_processor import TextProcessor
+
+logger = get_logger('phoring.graph_builder')
 
 
 @dataclass
@@ -164,7 +167,7 @@ class GraphBuilderService:
                 message="Collecting graph statistics..."
             )
             
-            graph_info = self._get_graph_info(graph_id)
+            graph_info = self.get_graph_info(graph_id)
             
             # Mark task as complete
             self.task_manager.complete_task(task_id, {
@@ -404,21 +407,17 @@ class GraphBuilderService:
         if progress_callback:
             progress_callback(f"Processing complete: {completed_count}/{total_episodes}", 1.0)
     
-    def _get_graph_info(self, graph_id: str) -> GraphInfo:
-        """Fetch node/edge totals and inferred entity label types."""
-        # Get all nodes
+    def get_graph_info(self, graph_id: str) -> GraphInfo:
+        """Fetch node/edge totals and inferred entity label types (lightweight)."""
         nodes = fetch_all_nodes(self.client, graph_id)
-
-        # Get all edges
         edges = fetch_all_edges(self.client, graph_id)
 
-        # Collect unique entity types
         entity_types = set()
         for node in nodes:
-            if node.labels:
-                for label in node.labels:
-                    if label not in ["Entity", "Node"]:
-                        entity_types.add(label)
+            labels = getattr(node, 'labels', None) or []
+            for label in labels:
+                if label not in ("Entity", "Node"):
+                    entity_types.add(label)
 
         return GraphInfo(
             graph_id=graph_id,
@@ -432,55 +431,55 @@ class GraphBuilderService:
         nodes = fetch_all_nodes(self.client, graph_id)
         edges = fetch_all_edges(self.client, graph_id)
 
-        # Build node UUID-to-name map
+        # Build node UUID-to-name map (defensive)
         node_map = {}
         for node in nodes:
-            node_map[node.uuid_] = node.name or ""
+            nid = getattr(node, 'uuid_', None) or getattr(node, 'uuid', '')
+            node_map[nid] = getattr(node, 'name', None) or ''
         
         nodes_data = []
         for node in nodes:
-            # Get creation time
             created_at = getattr(node, 'created_at', None)
             if created_at:
                 created_at = str(created_at)
             
             nodes_data.append({
-                "uuid": node.uuid_,
-                "name": node.name,
-                "labels": node.labels or [],
-                "summary": node.summary or "",
-                "attributes": node.attributes or {},
+                "uuid": getattr(node, 'uuid_', None) or getattr(node, 'uuid', ''),
+                "name": getattr(node, 'name', None) or '',
+                "labels": getattr(node, 'labels', None) or [],
+                "summary": getattr(node, 'summary', None) or '',
+                "attributes": getattr(node, 'attributes', None) or {},
                 "created_at": created_at,
             })
         
         edges_data = []
         for edge in edges:
-            # Get time info
             created_at = getattr(edge, 'created_at', None)
             valid_at = getattr(edge, 'valid_at', None)
             invalid_at = getattr(edge, 'invalid_at', None)
             expired_at = getattr(edge, 'expired_at', None)
             
-            # Get episodes
             episodes = getattr(edge, 'episodes', None) or getattr(edge, 'episode_ids', None)
             if episodes and not isinstance(episodes, list):
                 episodes = [str(episodes)]
             elif episodes:
                 episodes = [str(e) for e in episodes]
             
-            # Get fact_type
-            fact_type = getattr(edge, 'fact_type', None) or edge.name or ""
+            edge_name = getattr(edge, 'name', None) or ''
+            fact_type = getattr(edge, 'fact_type', None) or edge_name
+            source_uuid = getattr(edge, 'source_node_uuid', None) or ''
+            target_uuid = getattr(edge, 'target_node_uuid', None) or ''
             
             edges_data.append({
-                "uuid": edge.uuid_,
-                "name": edge.name or "",
-                "fact": edge.fact or "",
+                "uuid": getattr(edge, 'uuid_', None) or getattr(edge, 'uuid', ''),
+                "name": edge_name,
+                "fact": getattr(edge, 'fact', None) or '',
                 "fact_type": fact_type,
-                "source_node_uuid": edge.source_node_uuid,
-                "target_node_uuid": edge.target_node_uuid,
-                "source_node_name": node_map.get(edge.source_node_uuid, ""),
-                "target_node_name": node_map.get(edge.target_node_uuid, ""),
-                "attributes": edge.attributes or {},
+                "source_node_uuid": source_uuid,
+                "target_node_uuid": target_uuid,
+                "source_node_name": node_map.get(source_uuid, ''),
+                "target_node_name": node_map.get(target_uuid, ''),
+                "attributes": getattr(edge, 'attributes', None) or {},
                 "created_at": str(created_at) if created_at else None,
                 "valid_at": str(valid_at) if valid_at else None,
                 "invalid_at": str(invalid_at) if invalid_at else None,

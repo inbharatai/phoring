@@ -448,20 +448,20 @@ def build_graph():
 
                 builder._wait_for_episodes(episode_uuids, wait_progress_callback)
 
-                # Retrieve graph data
+                # Retrieve graph stats (lightweight — avoids loading full payloads)
                 task_manager.update_task(
                     task_id,
-                    message="Retrieving graph data...",
+                    message="Retrieving graph statistics...",
                     progress=95
                 )
-                graph_data = builder.get_graph_data(graph_id)
+                graph_info = builder.get_graph_info(graph_id)
 
                 # Update project status
                 project.status = ProjectStatus.GRAPH_COMPLETED
                 ProjectManager.save_project(project)
 
-                node_count = graph_data.get("node_count", 0)
-                edge_count = graph_data.get("edge_count", 0)
+                node_count = graph_info.node_count
+                edge_count = graph_info.edge_count
                 build_logger.info(f"[{task_id}] Graph build complete: graph_id={graph_id}, nodes={node_count}, edges={edge_count}")
 
                 task_manager.update_task(
@@ -558,6 +558,17 @@ def get_graph_data(graph_id: str):
                 "error": "ZEP_API_KEY not configured"
             }), 500
 
+        # Guard: reject premature fetches while graph is still building
+        projects = ProjectManager.list_projects(limit=100)
+        for p in projects:
+            if p.graph_id == graph_id and p.status == ProjectStatus.GRAPH_BUILDING:
+                return jsonify({
+                    "success": False,
+                    "error": "Graph is still building. Poll the build task for progress.",
+                    "status": "building",
+                    "task_id": p.graph_build_task_id
+                }), 202
+
         builder = GraphBuilderService(api_key=Config.ZEP_API_KEY)
         graph_data = builder.get_graph_data(graph_id)
 
@@ -567,10 +578,23 @@ def get_graph_data(graph_id: str):
         })
 
     except Exception as e:
-        logger.error(f"Failed to get graph data: {e}", exc_info=True)
+        from zep_cloud import NotFoundError, BadRequestError
+        if isinstance(e, NotFoundError):
+            logger.warning(f"Graph not found in Zep: {graph_id}")
+            return jsonify({
+                "success": False,
+                "error": f"Graph not found: {graph_id}"
+            }), 404
+        if isinstance(e, BadRequestError):
+            logger.warning(f"Bad graph request for {graph_id}: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid graph request: {str(e)[:200]}"
+            }), 400
+        logger.error(f"Failed to get graph data for {graph_id}: {e}", exc_info=True)
         return jsonify({
             "success": False,
-            "error": "Failed to get graph data. Check server logs for details."
+            "error": f"Failed to get graph data: {type(e).__name__}"
         }), 500
 
 

@@ -10,7 +10,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from zep_cloud import InternalServerError
+from zep_cloud import InternalServerError, NotFoundError, BadRequestError
 from zep_cloud.client import Zep
 
 from.logger import get_logger
@@ -19,6 +19,7 @@ logger = get_logger('phoring.zep_paging')
 
 _DEFAULT_PAGE_SIZE = 100
 _MAX_NODES = 2000
+_MAX_EDGES = 5000
 _DEFAULT_MAX_RETRIES = 3
 _DEFAULT_RETRY_DELAY = 2.0 # seconds, doubles each retry
 
@@ -51,6 +52,12 @@ def _fetch_page_with_retry(
                 delay *= 2
             else:
                 logger.error(f"Zep {page_description} failed after {max_retries} attempts: {str(e)}")
+        except (NotFoundError, BadRequestError) as e:
+            logger.error(f"Zep {page_description} non-retryable error ({type(e).__name__}): {str(e)[:200]}")
+            raise
+        except Exception as e:
+            logger.error(f"Zep {page_description} unexpected error ({type(e).__name__}): {str(e)[:200]}")
+            raise
 
     assert last_exception is not None
     raise last_exception
@@ -106,10 +113,11 @@ def fetch_all_edges(
     client: Zep,
     graph_id: str,
     page_size: int = _DEFAULT_PAGE_SIZE,
+    max_items: int = _MAX_EDGES,
     max_retries: int = _DEFAULT_MAX_RETRIES,
     retry_delay: float = _DEFAULT_RETRY_DELAY,
 ) -> list[Any]:
-    """Fetch all edges for a graph, returning the complete list. Retries on failure."""
+    """Fetch all edges for a graph, up to max_items (default 5000). Retries on failure."""
     all_edges: list[Any] = []
     cursor: str | None = None
     page_num = 0
@@ -132,6 +140,10 @@ def fetch_all_edges(
             break
 
         all_edges.extend(batch)
+        if len(all_edges) >= max_items:
+            all_edges = all_edges[:max_items]
+            logger.warning(f"Edge count reached limit ({max_items}), stopping pagination for graph {graph_id}")
+            break
         if len(batch) < page_size:
             break
 
