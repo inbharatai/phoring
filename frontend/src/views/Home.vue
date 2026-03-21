@@ -77,43 +77,8 @@
           <p class="fc-sub">Each stage of the pipeline is a discrete, inspectable step — from document parsing and knowledge graph construction, through web context enrichment, to multi-agent simulation and report generation with inline citations.</p>
         </div>
 
-        <!-- Animated pipeline flow -->
-        <div class="pf-flow" aria-hidden="true">
-          <div class="pf-node">
-            <div class="pf-circle">01</div>
-            <span class="pf-lbl">Doc + Prompt</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead"></div></div>
-          <div class="pf-node">
-            <div class="pf-circle">02</div>
-            <span class="pf-lbl">Entity Extract</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead" style="--delay:0.5s"></div></div>
-          <div class="pf-node">
-            <div class="pf-circle">03</div>
-            <span class="pf-lbl">Web &amp; News</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead" style="--delay:1s"></div></div>
-          <div class="pf-node">
-            <div class="pf-circle">04</div>
-            <span class="pf-lbl">Web Context</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead" style="--delay:1.5s"></div></div>
-          <div class="pf-node">
-            <div class="pf-circle">05</div>
-            <span class="pf-lbl">Agent Graph</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead" style="--delay:2s"></div></div>
-          <div class="pf-node">
-            <div class="pf-circle">06</div>
-            <span class="pf-lbl">Simulation</span>
-          </div>
-          <div class="pf-rail"><div class="pf-bead" style="--delay:2.5s"></div></div>
-          <div class="pf-node pf-node--out">
-            <div class="pf-circle">07</div>
-            <span class="pf-lbl">Forecast</span>
-          </div>
-        </div>
+        <!-- 3D interactive pipeline graph -->
+        <Pipeline3DGraph />
 
         <div class="feature-grid">
           <article>
@@ -277,6 +242,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
+import Pipeline3DGraph from '../components/Pipeline3DGraph.vue'
 import { useAppStore } from '../stores/app'
 
 const router = useRouter()
@@ -587,87 +553,6 @@ const startSimulation = () => {
   max-width: 78ch;
   margin-top: 6px;
   font-size: 0.9rem;
-}
-
-/* ── Pipeline flow diagram ───────────────────────── */
-.pf-flow {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 26px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.pf-node {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-}
-
-.pf-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  border: 1.5px solid rgba(13, 111, 112, 0.28);
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--teal);
-  box-shadow: 0 2px 8px rgba(13, 111, 112, 0.07);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.pf-node:hover .pf-circle {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(13, 111, 112, 0.15);
-}
-
-.pf-node--out .pf-circle {
-  border-color: var(--coral);
-  color: var(--coral);
-  background: rgba(219, 93, 59, 0.06);
-}
-
-.pf-lbl {
-  font-family: var(--mono);
-  font-size: 0.59rem;
-  letter-spacing: 0.04em;
-  color: rgba(16, 20, 31, 0.5);
-  white-space: nowrap;
-  text-align: center;
-}
-
-.pf-rail {
-  flex: 1 1 auto;
-  min-width: 36px;
-  height: 1.5px;
-  background: var(--line);
-  position: relative;
-  align-self: center;
-  margin-bottom: 28px;
-  overflow: hidden;
-  border-radius: 999px;
-}
-
-.pf-bead {
-  position: absolute;
-  top: 50%;
-  left: -6px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--teal);
-  transform: translateY(-50%);
-  animation: beadRun 2.4s ease-in-out infinite;
-  animation-delay: var(--delay, 0s);
 }
 
 /* ── Feature cards ───────────────────────────────── */
@@ -1012,13 +897,6 @@ a.ts-chip:hover {
   }
 }
 
-@keyframes beadRun {
-  0%   { left: -6px;              opacity: 0; }
-  8%   { opacity: 1; }
-  92%  { opacity: 1; }
-  100% { left: calc(100% + 6px); opacity: 0; }
-}
-
 /* ── Status / transparency section ────────────────── */
 .status-card {
   grid-column: 1 / 3;
@@ -1097,10 +975,6 @@ a.ts-chip:hover {
 
   .feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pf-flow {
-    gap: 0;
   }
 
   .hero-card {
