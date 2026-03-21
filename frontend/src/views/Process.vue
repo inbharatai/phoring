@@ -787,6 +787,12 @@ const fetchGraphData = async () => {
       
       // Getgraphdata
       const graphResponse = await getGraphData(graphId)
+
+      // Graph still building — keep polling silently
+      if (graphResponse.isStillProcessing) {
+        console.log('⏳ Graph still building, will retry...')
+        return
+      }
       
       if (graphResponse.success && graphResponse.data) {
         const newData = graphResponse.data

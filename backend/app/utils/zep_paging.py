@@ -14,12 +14,13 @@ from zep_cloud import InternalServerError, NotFoundError, BadRequestError
 from zep_cloud.client import Zep
 
 from.logger import get_logger
+from..config import Config
 
 logger = get_logger('phoring.zep_paging')
 
 _DEFAULT_PAGE_SIZE = 100
-_MAX_NODES = 2000
-_MAX_EDGES = 5000
+_MAX_NODES = Config.MAX_GRAPH_NODES
+_MAX_EDGES = Config.MAX_GRAPH_EDGES
 _DEFAULT_MAX_RETRIES = 3
 _DEFAULT_RETRY_DELAY = 2.0 # seconds, doubles each retry
 

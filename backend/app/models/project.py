@@ -242,6 +242,25 @@ class ProjectManager:
         return projects[:limit]
 
     @classmethod
+    def find_project_by_graph_id(cls, graph_id: str) -> Optional[Project]:
+        """Find the project that owns a given Zep graph_id.
+
+        Scans all project directories (no limit cap).
+
+        Args:
+            graph_id: Zep graph UUID.
+
+        Returns:
+            Project object, or None if no project owns this graph_id.
+        """
+        cls._ensure_projects_dir()
+        for project_id in os.listdir(cls.PROJECTS_DIR):
+            project = cls.get_project(project_id)
+            if project and project.graph_id == graph_id:
+                return project
+        return None
+
+    @classmethod
     def delete_project(cls, project_id: str) -> bool:
         """Delete a project and all its files.
 

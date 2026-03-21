@@ -38,6 +38,13 @@ function humanizeError(error) {
 service.interceptors.response.use(
   response => {
     const res = response.data
+
+    // 202 Accepted = still processing (graph building, etc.)
+    // Return as resolved (not rejected) so pollers keep polling without toast errors
+    if (response.status === 202) {
+      return { success: false, isStillProcessing: true, ...res }
+    }
+
     if (res.success === false) {
       const msg = res.error || res.message || 'Unknown error'
       console.error('[API] Business error:', msg)

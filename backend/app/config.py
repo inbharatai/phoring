@@ -65,6 +65,10 @@ class Config:
     # Text processing config
     DEFAULT_CHUNK_SIZE = 500 # default chunk size
     DEFAULT_CHUNK_OVERLAP = 50 # default chunk overlap
+
+    # Graph pagination caps
+    MAX_GRAPH_NODES = int(os.environ.get('MAX_GRAPH_NODES', '2000'))
+    MAX_GRAPH_EDGES = int(os.environ.get('MAX_GRAPH_EDGES', '5000'))
     
     # OASIS simulation configuration
     OASIS_DEFAULT_MAX_ROUNDS = int(os.environ.get('OASIS_DEFAULT_MAX_ROUNDS', '10'))

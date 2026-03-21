@@ -484,6 +484,8 @@ def build_graph():
 
                 project.status = ProjectStatus.FAILED
                 project.error = str(e)
+                project.graph_id = None
+                project.graph_build_task_id = None
                 ProjectManager.save_project(project)
 
                 task_manager.update_task(
@@ -558,16 +560,21 @@ def get_graph_data(graph_id: str):
                 "error": "ZEP_API_KEY not configured"
             }), 500
 
-        # Guard: reject premature fetches while graph is still building
-        projects = ProjectManager.list_projects(limit=100)
-        for p in projects:
-            if p.graph_id == graph_id and p.status == ProjectStatus.GRAPH_BUILDING:
-                return jsonify({
-                    "success": False,
-                    "error": "Graph is still building. Poll the build task for progress.",
-                    "status": "building",
-                    "task_id": p.graph_build_task_id
-                }), 202
+        # Guard: reject premature fetches while graph is building or failed
+        owner = ProjectManager.find_project_by_graph_id(graph_id)
+        if owner and owner.status == ProjectStatus.GRAPH_BUILDING:
+            return jsonify({
+                "success": False,
+                "error": "Graph is still building. Poll the build task for progress.",
+                "status": "building",
+                "task_id": owner.graph_build_task_id
+            }), 202
+        if owner and owner.status == ProjectStatus.FAILED:
+            return jsonify({
+                "success": False,
+                "error": "Graph build failed. Please rebuild the graph.",
+                "status": "failed"
+            }), 422
 
         builder = GraphBuilderService(api_key=Config.ZEP_API_KEY)
         graph_data = builder.get_graph_data(graph_id)

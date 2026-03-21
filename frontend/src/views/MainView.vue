@@ -315,6 +315,11 @@ const fetchGraphData = async () => {
     const projRes = await getProject(currentProjectId.value)
     if (projRes.success && projRes.data.graph_id) {
       const gRes = await getGraphData(projRes.data.graph_id)
+      // Graph still building — keep polling silently
+      if (gRes.isStillProcessing) {
+        console.log('⏳ Graph still building, will retry...')
+        return
+      }
       if (gRes.success) {
         graphData.value = gRes.data
         const nodeCount = gRes.data.node_count || gRes.data.nodes?.length || 0

@@ -252,7 +252,9 @@ const loadGraph = async (graphId) => {
   
   try {
     const res = await getGraphData(graphId)
-    if (res.success) {
+    if (res.isStillProcessing) {
+      addLog('Graph is still building, please wait...')
+    } else if (res.success) {
       graphData.value = res.data
       if (!isSimulating.value) {
         addLog('graphdataloadsuccess')

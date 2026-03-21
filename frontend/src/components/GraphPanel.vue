@@ -344,16 +344,19 @@ const renderGraph = () => {
     
   svg.selectAll('*').remove()
   
-  const nodesData = props.graphData.nodes || []
-  const edgesData = props.graphData.edges || []
+  const nodesData = props.graphData?.nodes || []
+  const edgesData = props.graphData?.edges || []
   
   if (nodesData.length === 0) return
 
   // Prep data
   const nodeMap = {}
-  nodesData.forEach(n => nodeMap[n.uuid] = n)
+  nodesData.forEach(n => {
+    if (!n?.uuid) return
+    nodeMap[n.uuid] = n
+  })
   
-  const nodes = nodesData.map(n => ({
+  const nodes = nodesData.filter(n => n?.uuid).map(n => ({
     id: n.uuid,
     name: n.name || 'Unnamed',
     type: n.labels?.find(l => l!== 'Entity') || 'Entity',
@@ -366,7 +369,7 @@ const renderGraph = () => {
   const edgePairCount = {}
   const selfLoopEdges = {} // node 
   const tempEdges = edgesData
-    .filter(e => nodeIds.has(e.source_node_uuid) && nodeIds.has(e.target_node_uuid))
+    .filter(e => e?.source_node_uuid && e?.target_node_uuid && nodeIds.has(e.source_node_uuid) && nodeIds.has(e.target_node_uuid))
   
   // node count, 
   tempEdges.forEach(e => {
