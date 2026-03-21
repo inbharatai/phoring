@@ -585,6 +585,30 @@ const fetchRunStatus = async () => {
       
       runStatus.value = data
       
+      // Detect backend state reset (server restart / orphan recovery)
+      // If backend says idle but we were in phase 1 (running), the simulation was lost
+      if (data.runner_status === 'idle' && phase.value === 1) {
+        addLog('⚠ simulation lost — server may have restarted')
+        addLog('  please restart the simulation')
+        phase.value = 0
+        stopPolling()
+        // Clear stale cached actions from previous run
+        allActions.value = []
+        actionIds.value = new Set()
+        emit('update-status', 'error')
+        return
+      }
+      
+      // Detect failed simulation
+      if (data.runner_status === 'failed') {
+        addLog(`✗ simulation failed: ${data.error || 'unknown error'}`)
+        phase.value = 0
+        stopPolling()
+        startError.value = data.error || 'Simulation failed'
+        emit('update-status', 'error')
+        return
+      }
+      
       // platform round outputlog
       if (data.twitter_current_round > prevTwitterRound.value) {
         addLog(`[Plaza] R${data.twitter_current_round}/${data.total_rounds} | T:${data.twitter_simulated_hours || 0}h | A:${data.twitter_actions_count}`)
@@ -649,8 +673,21 @@ const fetchRunStatusDetail = async () => {
     const res = await getRunStatusDetail(props.simulationId)
     
     if (res.success && res.data) {
+      // Also update runStatus from detail response (has the same state fields)
+      // This provides a second source of truth for round/progress data
+      if (res.data.runner_status && res.data.runner_status !== 'idle') {
+        runStatus.value = { ...runStatus.value, ...res.data }
+      }
+      
       // all_actions Getcomplete list
       const serverActions = res.data.all_actions || []
+      
+      // Detect server reset: if server has fewer actions than our cache,
+      // the backend was restarted and old logs were cleaned up — sync fully
+      if (serverActions.length < allActions.value.length && serverActions.length === 0 && allActions.value.length > 0) {
+        allActions.value = []
+        actionIds.value = new Set()
+      }
       
       // addnew ()
       let newActionsAdded = 0
@@ -667,9 +704,6 @@ const fetchRunStatusDetail = async () => {
           newActionsAdded++
         }
       })
-      
-      // auto, user time 
-      // new 
     }
   } catch (err) {
     console.warn('Getdetailedstatusfailed:', err)

@@ -310,6 +310,18 @@ class SimulationRunner:
 
                 except Exception as e:
                     logger.warning(f"Failed to restart simulation {sim_id}: {e}")
+                    # Cleanup may have deleted run_state.json; recreate it
+                    # so _mark_simulation_failed has a file to update.
+                    if not os.path.isfile(run_state_file):
+                        try:
+                            with open(run_state_file, 'w', encoding='utf-8') as f:
+                                json.dump({
+                                    "simulation_id": sim_id,
+                                    "runner_status": "running",
+                                    "updated_at": now,
+                                }, f, ensure_ascii=False, indent=2)
+                        except Exception:
+                            pass
                     # Fall through to mark as failed
 
             # No run_params or restart failed — mark as failed
