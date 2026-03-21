@@ -78,11 +78,11 @@ const NODES = [
   { id: 'interviews', label: 'Agent Interviews',      tag: 'TOOL',        desc: 'Real-time IPC to running OASIS agents — not LLM-simulated',              detail: 'Batch interviews across Twitter + Reddit simultaneously',         color: 0xa855f7, pos: [12,  2.5,  1.5], shape: 'diamond'  },
   { id: 'freshweb',   label: 'Fresh Web Context',     tag: 'TOOL',        desc: 'Live news retrieval at report time for fact-grounding',                   detail: 'Same Serper + Event Registry pipeline, ≤6000 chars',             color: 0xa855f7, pos: [12,  1.5,  0],   shape: 'diamond'  },
 
-  // LAYER 6 — Consensus Validation (3 AI models converge)
-  { id: 'consensus',  label: 'Consensus Engine',      tag: 'VALIDATE',    desc: 'Extracts 3-7 predictions, validates against web context + multi-AI',     detail: 'Levels: unanimous → majority → split → dissent · Confidence 0-1', color: 0xfbbf24, pos: [14,  3.5, -1],   shape: 'sphere'   },
-  { id: 'ai1',        label: 'Primary AI',             tag: 'VALIDATOR',   desc: 'OpenAI GPT-4o-mini — always present, primary scorer',                    detail: 'agreement + confidence_score + reasoning + risk_factors',         color: 0x22c55e, pos: [16,  5,   0],    shape: 'cone'     },
-  { id: 'ai2',        label: 'Claude (Validator 2)',   tag: 'VALIDATOR',   desc: 'Anthropic Claude — optional cross-model verification',                   detail: 'Independent scoring: coherence, precedent, completeness, risk',   color: 0xf97316, pos: [16,  3.5, -1.5], shape: 'cone'     },
-  { id: 'ai3',        label: 'Gemini (Validator 3)',   tag: 'VALIDATOR',   desc: 'Google Gemini — optional third perspective',                             detail: 'Alternative viewpoints + risk factor identification',             color: 0x06b6d4, pos: [16,  2,    0],   shape: 'cone'     },
+  // LAYER 6 — Consensus Validation (hub-and-spoke: validators orbit the engine)
+  { id: 'consensus',  label: 'Consensus Engine',      tag: 'VALIDATE',    desc: 'Extracts 3-7 predictions, gathers fresh web context, dispatches to multi-AI validators, consolidates scores', detail: 'Levels: unanimous → majority → split → dissent · Confidence 0-1 · One-way append to report', color: 0xfbbf24, pos: [15,  3.5, -0.5], shape: 'icosahedron' },
+  { id: 'ai1',        label: 'Primary AI',             tag: 'VALIDATOR',   desc: 'OpenAI GPT-4o-mini — always present, primary scorer',                    detail: 'agreement + confidence_score + reasoning + risk_factors → returns to engine', color: 0x22c55e, pos: [15,  5.8,  0.5], shape: 'cone'     },
+  { id: 'ai2',        label: 'Claude (Validator 2)',   tag: 'VALIDATOR',   desc: 'Anthropic Claude — optional cross-model verification',                   detail: 'Independent scoring: coherence, precedent, completeness → returns to engine', color: 0xf97316, pos: [16.8, 3.5, -1.8], shape: 'cone'    },
+  { id: 'ai3',        label: 'Gemini (Validator 3)',   tag: 'VALIDATOR',   desc: 'Google Gemini — optional third perspective',                             detail: 'Alternative viewpoints + risk factor identification → returns to engine',     color: 0x06b6d4, pos: [15,  1.2, -1.5], shape: 'cone'     },
 
   // LAYER 7 — Output
   { id: 'forecast',   label: 'Source-Cited Forecast',  tag: 'OUTPUT',      desc: 'Final report: outline, sections, citations [1][2][3], confidence [HIGH/MED/LOW]', detail: 'Markdown + JSON · Consensus appendix · Interactive Q&A', color: 0xfbbf24, pos: [18.5, 3.5, 0],  shape: 'dodecahedron' },
@@ -140,15 +140,21 @@ const EDGES = [
   // Report → Consensus
   { from: 'reportagent', to: 'consensus',    color: 0xdb5d3b },
 
-  // Consensus → 3 AI validators (fan-out)
+  // Consensus independently fetches fresh web context for fact-checking
+  { from: 'webintel',    to: 'consensus',    color: 0x2a9d8f },
+
+  // Consensus → 3 AI validators (fan-out dispatch)
   { from: 'consensus',   to: 'ai1',          color: 0x22c55e },
   { from: 'consensus',   to: 'ai2',          color: 0xf97316 },
   { from: 'consensus',   to: 'ai3',          color: 0x06b6d4 },
 
-  // Validators → Final output (fan-in)
-  { from: 'ai1',         to: 'forecast',     color: 0x22c55e },
-  { from: 'ai2',         to: 'forecast',     color: 0xf97316 },
-  { from: 'ai3',         to: 'forecast',     color: 0x06b6d4 },
+  // Validators → back to Consensus (assessment consolidation)
+  { from: 'ai1',         to: 'consensus',    color: 0x22c55e },
+  { from: 'ai2',         to: 'consensus',    color: 0xf97316 },
+  { from: 'ai3',         to: 'consensus',    color: 0x06b6d4 },
+
+  // Consensus → Final output (one-way append to report)
+  { from: 'consensus',   to: 'forecast',     color: 0xfbbf24 },
 ]
 
 /* ── Refs ─────────────────────────────────────────── */
