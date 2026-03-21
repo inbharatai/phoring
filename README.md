@@ -80,29 +80,169 @@ Deployed on Render (Docker, Pro plan). Upload a document, walk through the five-
 
 ## How It Works
 
+> **Interactive 3D version** of this graph available on the [live demo](https://phoring.onrender.com)
+
 ```mermaid
 flowchart LR
-    U[Documents + Objective] --> FE[Frontend\nVue 3 + Vite]
-    FE --> API[Flask API]
+    subgraph INPUT["INPUT"]
+        docs["Documents + Scenario"]
+    end
 
-    API --> OG[Ontology\nGenerator]
-    API --> GB[Graph Builder\nZep Cloud]
-    API --> WI[Web Intelligence\nSerper + Event Registry]
-    API --> PG[OASIS Profile\nGenerator]
-    API --> SC[Simulation Config\nGenerator]
+    subgraph PROCESSING["PROCESSING"]
+        textproc("Text Processor")
+        ontology("Ontology Generator")
+        webintel("Web Intelligence")
+    end
 
-    OG --> GB
-    GB --> Z[(Zep Knowledge Graph)]
-    WI --> SC
-    PG --> SM[Simulation\nManager]
-    SC --> SM
-    Z --> SM
+    subgraph SOURCES["WEB SOURCES"]
+        serper{"Serper API"}
+        eventReg{"Event Registry"}
+        scraper{"Social Scraping"}
+    end
 
-    SM --> OR[OASIS Runtime\nParallel Subprocess]
-    OR --> RA[Report Agent\nReACT Loop]
-    RA --> CV[Consensus\nValidator]
-    CV --> FE
+    subgraph KG["KNOWLEDGE GRAPH"]
+        zepgraph(("Zep Knowledge Graph"))
+    end
+
+    subgraph AGENTS["AGENT GENERATION"]
+        profgen("Profile Generator")
+        simconfig("Simulation Config")
+    end
+
+    subgraph SIM["SIMULATION"]
+        geoevents{"Geopolitical Events"}
+        simrunner("OASIS SimRunner")
+        twitter["Twitter Environment"]
+        reddit["Reddit Environment"]
+        zepmemory{"Zep Memory Updater"}
+    end
+
+    subgraph REPORT["REPORT"]
+        reportagent("Report Agent")
+        insightforge{"Insight Forge"}
+        panorama{"Panorama Search"}
+        interviews{"Agent Interviews"}
+        freshweb{"Fresh Web Context"}
+    end
+
+    subgraph CONSENSUS["CONSENSUS VALIDATION"]
+        consensus(("Consensus Engine"))
+        ai1{{"Primary AI (GPT-4o)"}}
+        ai2{{"Claude (Validator 2)"}}
+        ai3{{"Gemini (Validator 3)"}}
+    end
+
+    subgraph OUTPUT["OUTPUT"]
+        forecast[["Source-Cited Forecast"]]
+    end
+
+    %% Input → Processing fan-out
+    docs --> textproc
+    docs --> ontology
+    docs --> webintel
+
+    %% Web Intelligence → 3 parallel sources
+    webintel --> serper
+    webintel --> eventReg
+    webintel --> scraper
+
+    %% Fan-in to Knowledge Graph
+    textproc --> zepgraph
+    ontology --> zepgraph
+    serper --> zepgraph
+    eventReg --> zepgraph
+    scraper --> zepgraph
+
+    %% Graph → Agent Generation
+    zepgraph --> profgen
+    zepgraph --> simconfig
+    webintel -.-> profgen
+
+    %% Agents → Simulation
+    profgen --> simrunner
+    simconfig --> simrunner
+    geoevents -.-> simrunner
+
+    %% Parallel platform execution
+    simrunner --> twitter
+    simrunner --> reddit
+
+    %% Live writeback loop
+    twitter -.-> zepmemory
+    reddit -.-> zepmemory
+    zepmemory -.->|writeback| zepgraph
+
+    %% Simulation → Report
+    twitter --> reportagent
+    reddit --> reportagent
+    zepgraph --> reportagent
+
+    %% Report Agent → 4 tools
+    reportagent --> insightforge
+    reportagent --> panorama
+    reportagent --> interviews
+    reportagent --> freshweb
+
+    %% Report → Consensus
+    reportagent --> consensus
+    webintel -.->|independent fetch| consensus
+
+    %% Hub-spoke: Consensus ↔ Validators
+    consensus --> ai1
+    consensus --> ai2
+    consensus --> ai3
+    ai1 --> consensus
+    ai2 --> consensus
+    ai3 --> consensus
+
+    %% Final output
+    consensus --> forecast
+
+    %% Node colors matching the interactive 3D graph
+    classDef inputNode fill:#6b7280,stroke:#4b5563,color:#fff
+    classDef parseNode fill:#0d6f70,stroke:#0a5a5b,color:#fff
+    classDef searchNode fill:#2a9d8f,stroke:#1e7a6e,color:#fff
+    classDef newsNode fill:#3b82f6,stroke:#2563eb,color:#fff
+    classDef eventNode fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef scrapeNode fill:#ec4899,stroke:#db2777,color:#fff
+    classDef graphNode fill:#10b981,stroke:#059669,color:#fff
+    classDef agentNode fill:#f59e0b,stroke:#d97706,color:#000
+    classDef engineNode fill:#e76f51,stroke:#c44a33,color:#fff
+    classDef twitterNode fill:#1da1f2,stroke:#0c85d0,color:#fff
+    classDef redditNode fill:#ff4500,stroke:#cc3700,color:#fff
+    classDef writebackNode fill:#10b981,stroke:#059669,color:#fff
+    classDef disruptNode fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef reportNode fill:#db5d3b,stroke:#b44830,color:#fff
+    classDef toolNode fill:#a855f7,stroke:#9333ea,color:#fff
+    classDef validateNode fill:#fbbf24,stroke:#d97706,color:#000
+    classDef validatorNode fill:#22c55e,stroke:#16a34a,color:#fff
+    classDef claudeNode fill:#f97316,stroke:#ea580c,color:#fff
+    classDef geminiNode fill:#06b6d4,stroke:#0891b2,color:#fff
+    classDef outputNode fill:#fbbf24,stroke:#d97706,color:#000
+
+    class docs inputNode
+    class textproc,ontology parseNode
+    class webintel searchNode
+    class serper newsNode
+    class eventReg eventNode
+    class scraper scrapeNode
+    class zepgraph graphNode
+    class profgen,simconfig agentNode
+    class simrunner engineNode
+    class twitter twitterNode
+    class reddit redditNode
+    class zepmemory writebackNode
+    class geoevents disruptNode
+    class reportagent reportNode
+    class insightforge,panorama,interviews,freshweb toolNode
+    class consensus validateNode
+    class ai1 validatorNode
+    class ai2 claudeNode
+    class ai3 geminiNode
+    class forecast outputNode
 ```
+
+**28 nodes · 38 edges · 8 architectural layers** — solid lines show primary data flow, dashed lines show secondary enrichment and feedback loops.
 
 ### Five-Step Pipeline
 
