@@ -58,6 +58,18 @@ export function getGraphData(graphId) {
 }
 
 /**
+ * Get live graph preview data during graph builds.
+ * @param {String} graphId - graphID
+ * @returns {Promise}
+ */
+export function getGraphPreview(graphId) {
+  return service({
+    url: `/api/graph/data/${graphId}/preview`,
+    method: 'get'
+  })
+}
+
+/**
  * Getprojectinfo
  * @param {String} projectId - projectID
  * @returns {Promise}

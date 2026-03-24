@@ -1,7 +1,14 @@
 <template>
   <div class="graph-panel">
     <div class="panel-header">
-      <span class="panel-title">Graph Relationship Visualization</span>
+      <div class="header-title-group">
+        <span class="panel-title">Graph Relationship Visualization</span>
+        <div v-if="graphData" class="graph-meta">
+          <span>{{ displayNodeCount }} nodes</span>
+          <span>{{ displayEdgeCount }} edges</span>
+          <span v-if="graphData.is_preview" class="preview-badge">Live Preview</span>
+        </div>
+      </div>
       <!-- tool (Internal Top Right) -->
       <div class="header-tools">
         <button class="tool-btn" @click="$emit('refresh')":disabled="loading" title="refreshgraph">
@@ -27,7 +34,7 @@
               <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0.34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-4.04z" />
             </svg>
           </div>
-          {{ isSimulating? 'GraphRAG Update ': ' Update...' }}
+          {{ isSimulating ? 'GraphRAG Update ' : (graphData?.is_preview ? 'Live graph preview updating...' : 'Update...') }}
         </div>
         
         <!-- simulationfinish hint -->
@@ -296,6 +303,14 @@ const entityTypes = computed(() => {
     typeMap[type].count++
   })
   return Object.values(typeMap)
+})
+
+const displayNodeCount = computed(() => {
+  return props.graphData?.total_node_count ?? props.graphData?.node_count ?? props.graphData?.nodes?.length ?? 0
+})
+
+const displayEdgeCount = computed(() => {
+  return props.graphData?.total_edge_count ?? props.graphData?.edge_count ?? props.graphData?.edges?.length ?? 0
 })
 
 // format time
@@ -846,6 +861,30 @@ onUnmounted(() => {
   font-weight: 600;
   color: #333;
   pointer-events: auto;
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.graph-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #666;
+}
+
+.preview-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 107, 53, 0.12);
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  color: #c24d1f;
+  font-weight: 600;
 }
 
 .header-tools {

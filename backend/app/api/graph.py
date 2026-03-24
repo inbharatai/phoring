@@ -605,6 +605,59 @@ def get_graph_data(graph_id: str):
         }), 500
 
 
+@graph_bp.route('/data/<graph_id>/preview', methods=['GET'])
+def get_graph_preview_data(graph_id: str):
+    """Get a live graph preview while a graph is still being built."""
+    try:
+        if not Config.ZEP_API_KEY:
+            return jsonify({
+                "success": False,
+                "error": "ZEP_API_KEY not configured"
+            }), 500
+
+        owner = ProjectManager.find_project_by_graph_id(graph_id)
+        if owner and owner.status == ProjectStatus.FAILED:
+            return jsonify({
+                "success": False,
+                "error": "Graph build failed. Please rebuild the graph.",
+                "status": "failed"
+            }), 422
+
+        builder = GraphBuilderService(api_key=Config.ZEP_API_KEY)
+
+        if owner and owner.status == ProjectStatus.GRAPH_COMPLETED:
+            graph_data = builder.get_graph_data(graph_id)
+        else:
+            graph_data = builder.get_graph_preview(graph_id)
+            if owner:
+                graph_data["task_id"] = owner.graph_build_task_id
+
+        return jsonify({
+            "success": True,
+            "data": graph_data
+        })
+
+    except Exception as e:
+        from zep_cloud import NotFoundError, BadRequestError
+        if isinstance(e, NotFoundError):
+            logger.warning(f"Graph not found in Zep preview: {graph_id}")
+            return jsonify({
+                "success": False,
+                "error": f"Graph not found: {graph_id}"
+            }), 404
+        if isinstance(e, BadRequestError):
+            logger.warning(f"Bad graph preview request for {graph_id}: {e}")
+            return jsonify({
+                "success": False,
+                "error": f"Invalid graph request: {str(e)[:200]}"
+            }), 400
+        logger.error(f"Failed to get graph preview for {graph_id}: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Failed to get graph preview: {type(e).__name__}"
+        }), 500
+
+
 @graph_bp.route('/delete/<graph_id>', methods=['DELETE'])
 def delete_graph(graph_id: str):
     """Delete a Zep graph."""

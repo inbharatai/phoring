@@ -8,6 +8,7 @@ import time
 import threading
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
+from datetime import datetime
 
 from..config import Config
 from..models.task import TaskManager, TaskStatus
@@ -37,6 +38,9 @@ class GraphInfo:
 
 class GraphBuilderService:
     """Build and manage Zep knowledge graphs for simulation projects."""
+
+    PREVIEW_MAX_NODES = 120
+    PREVIEW_MAX_EDGES = 240
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or Config.ZEP_API_KEY
@@ -431,6 +435,56 @@ class GraphBuilderService:
         nodes = fetch_all_nodes(self.client, graph_id)
         edges = fetch_all_edges(self.client, graph_id)
 
+        return self._build_graph_payload(
+            graph_id=graph_id,
+            nodes=nodes,
+            edges=edges,
+            is_preview=False,
+            is_complete=True,
+            status="completed",
+        )
+
+    def get_graph_preview(self, graph_id: str) -> Dict[str, Any]:
+        """Return a capped graph preview that is safe to poll during graph builds."""
+        nodes = fetch_all_nodes(self.client, graph_id)
+        edges = fetch_all_edges(self.client, graph_id)
+
+        preview_nodes = nodes[:self.PREVIEW_MAX_NODES]
+        preview_node_ids = {
+            getattr(node, 'uuid_', None) or getattr(node, 'uuid', '')
+            for node in preview_nodes
+        }
+        preview_edges = [
+            edge for edge in edges
+            if (getattr(edge, 'source_node_uuid', None) or '') in preview_node_ids
+            and (getattr(edge, 'target_node_uuid', None) or '') in preview_node_ids
+        ][:self.PREVIEW_MAX_EDGES]
+
+        return self._build_graph_payload(
+            graph_id=graph_id,
+            nodes=preview_nodes,
+            edges=preview_edges,
+            is_preview=True,
+            is_complete=False,
+            status="building",
+            total_node_count=len(nodes),
+            total_edge_count=len(edges),
+        )
+
+    def _build_graph_payload(
+        self,
+        graph_id: str,
+        nodes: List[Any],
+        edges: List[Any],
+        *,
+        is_preview: bool,
+        is_complete: bool,
+        status: str,
+        total_node_count: Optional[int] = None,
+        total_edge_count: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Serialize node and edge objects into a graph payload."""
+
         # Build node UUID-to-name map (defensive)
         node_map = {}
         for node in nodes:
@@ -487,12 +541,23 @@ class GraphBuilderService:
                 "episodes": episodes or [],
             })
         
+        if total_node_count is None:
+            total_node_count = len(nodes_data)
+        if total_edge_count is None:
+            total_edge_count = len(edges_data)
+
         return {
             "graph_id": graph_id,
             "nodes": nodes_data,
             "edges": edges_data,
             "node_count": len(nodes_data),
             "edge_count": len(edges_data),
+            "total_node_count": total_node_count,
+            "total_edge_count": total_edge_count,
+            "is_preview": is_preview,
+            "is_complete": is_complete,
+            "status": status,
+            "last_updated": datetime.utcnow().isoformat() + "Z",
         }
     
     def delete_graph(self, graph_id: str):

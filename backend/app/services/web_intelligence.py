@@ -406,6 +406,7 @@ class NewsScraperService:
         simulation_requirement: str,
         entities: Optional[List] = None,
         max_articles: int = 5,
+        additional_queries: Optional[List[str]] = None,
     ) -> Dict:
         """Dedicated geopolitical news fetcher with focused, short queries.
 
@@ -460,9 +461,22 @@ class NewsScraperService:
         if sector_words:
             queries.append(f"{' '.join(sector_words[:2])} policy regulation news this week")
 
+        if additional_queries:
+            queries.extend(q for q in additional_queries if q)
+
+        deduped_queries = []
+        seen_queries = set()
+        for query in queries:
+            normalized = " ".join(query.lower().split())
+            if normalized and normalized not in seen_queries:
+                deduped_queries.append(query[:220])
+                seen_queries.add(normalized)
+
+        queries = deduped_queries[:6]
+
         all_results = []
         seen_urls = set()
-        for q in queries[:3]:
+        for q in queries:
             # Use GLOBAL_SOURCES for geopolitical news (Reuters, BBC, Bloomberg, etc.)
             results = self.search_news(
                 query=q,

@@ -69,7 +69,7 @@ const NODES = [
   { id: 'zepmemory',  label: 'Zep Memory Updater',    tag: 'WRITEBACK',   desc: 'Live graph writeback — agent actions batched into Zep episodes',          detail: 'Buffer per platform · batch=5 · retry 3x · 0.5s rate limit',     color: 0x10b981, pos: [7.5, 3.5, -1.5], shape: 'octahedron' },
 
   // LAYER 4b — Geopolitical events inject into simulation
-  { id: 'geoevents',  label: 'Geopolitical Events',   tag: 'DISRUPTION',  desc: '14 event categories injected mid-simulation',                            detail: 'natural_disaster, armed_conflict, trade_war, sanctions, election_upheaval...', color: 0xef4444, pos: [5,   5.5, -2],   shape: 'octahedron' },
+  { id: 'geoevents',  label: 'Geopolitical Events',   tag: 'DISRUPTION',  desc: 'Grounded disruption events selected from 14 risk categories',            detail: 'Duration-scaled events with live-news grounding, entity exposure mapping, and timeline spread', color: 0xef4444, pos: [5,   5.5, -2],   shape: 'octahedron' },
 
   // LAYER 5 — Report (merges multiple inputs)
   { id: 'reportagent',label: 'Report Agent',          tag: 'REACT',       desc: 'ReACT loop: Thought → Tool Call → Answer, max 10 iterations/section',    detail: 'Planning phase → per-section generation with 4 tool types',       color: 0xdb5d3b, pos: [10.5, 3.5, 0],   shape: 'sphere'   },

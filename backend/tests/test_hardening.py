@@ -12,6 +12,8 @@ are functioning correctly:
 import json
 import sys
 import os
+from types import SimpleNamespace
+
 import pytest
 
 # Ensure the backend package is importable
@@ -259,3 +261,111 @@ class TestGeopoliticalRetryWiring:
         assert 'total_rounds' in to_dict_body, (
             "to_dict must compute and store total_rounds in the time_config dict"
         )
+
+
+# ---------------------------------------------------------------------------
+# Test 6: Graph preview endpoint returns safe live-build payloads
+# ---------------------------------------------------------------------------
+
+class TestGraphPreviewEndpoint:
+    def test_graph_preview_route_returns_preview_payload(self, monkeypatch):
+        from flask import Flask
+        from app.api import graph_bp
+        from app.api import graph as graph_api
+        from app.models.project import ProjectStatus
+
+        class FakeBuilder:
+            def __init__(self, api_key=None):
+                self.api_key = api_key
+
+            def get_graph_preview(self, graph_id):
+                return {
+                    "graph_id": graph_id,
+                    "nodes": [{"uuid": "n1", "name": "Iran", "labels": ["Entity", "Country"]}],
+                    "edges": [],
+                    "node_count": 1,
+                    "edge_count": 0,
+                    "total_node_count": 3,
+                    "total_edge_count": 1,
+                    "is_preview": True,
+                    "is_complete": False,
+                    "status": "building",
+                    "last_updated": "2026-03-24T00:00:00Z",
+                }
+
+        monkeypatch.setattr(graph_api.Config, "ZEP_API_KEY", "test-zep-key")
+        monkeypatch.setattr(
+            graph_api.ProjectManager,
+            "find_project_by_graph_id",
+            classmethod(lambda cls, graph_id: SimpleNamespace(
+                graph_id=graph_id,
+                status=ProjectStatus.GRAPH_BUILDING,
+                graph_build_task_id="task_preview_123",
+            ))
+        )
+        monkeypatch.setattr(graph_api, "GraphBuilderService", FakeBuilder)
+
+        app = Flask(__name__)
+        app.register_blueprint(graph_bp, url_prefix='/api/graph')
+        client = app.test_client()
+
+        response = client.get('/api/graph/data/graph_123/preview')
+        payload = response.get_json()
+
+        assert response.status_code == 200
+        assert payload["success"] is True
+        assert payload["data"]["is_preview"] is True
+        assert payload["data"]["status"] == "building"
+        assert payload["data"]["total_node_count"] == 3
+        assert payload["data"]["task_id"] == "task_preview_123"
+
+
+# ---------------------------------------------------------------------------
+# Test 7: Geopolitical planner scales volume and spreads timeline
+# ---------------------------------------------------------------------------
+
+class TestGeopoliticalPlanningHelpers:
+    def test_event_budget_scales_with_duration(self):
+        from app.services.simulation_config_generator import SimulationConfigGenerator
+
+        assert SimulationConfigGenerator._plan_geopolitical_event_count(24) == 3
+        assert SimulationConfigGenerator._plan_geopolitical_event_count(48) == 4
+        assert SimulationConfigGenerator._plan_geopolitical_event_count(72) == 6
+        assert SimulationConfigGenerator._plan_geopolitical_event_count(160) == 8
+
+    def test_intelligence_brief_builds_global_and_entity_queries(self):
+        from app.services.simulation_config_generator import SimulationConfigGenerator
+        from app.services.zep_entity_reader import EntityNode
+
+        entities = [
+            EntityNode(uuid="1", name="Tata Steel", labels=["Entity", "Company"], summary="Steel producer", attributes={}),
+            EntityNode(uuid="2", name="RBI", labels=["Entity", "Regulator"], summary="Central bank", attributes={}),
+        ]
+
+        brief = SimulationConfigGenerator._build_geopolitical_intelligence_brief(
+            simulation_requirement="Assess India market fallout from Iran war escalation and Red Sea shipping risk.",
+            entities=entities,
+            context="Iran-Israel tensions, sanctions risk, oil shipping, and Indian steel exposure.",
+        )
+
+        query_blob = " ".join(brief["search_queries"]).lower()
+        assert "global geopolitical risk" in query_blob
+        assert "tata steel" in query_blob
+        assert any(keyword.lower() == "iran" for keyword in brief["topic_keywords"])
+
+    def test_spread_helper_rebalances_clustered_events(self):
+        from app.services.simulation_config_generator import SimulationConfigGenerator
+
+        events = [
+            {"trigger_round": 1, "title": "Event A", "impact_factor": -0.2},
+            {"trigger_round": 2, "title": "Event B", "impact_factor": -0.3},
+            {"trigger_round": 3, "title": "Event C", "impact_factor": 0.1},
+            {"trigger_round": 4, "title": "Event D", "impact_factor": -0.4},
+        ]
+
+        spread = SimulationConfigGenerator._spread_geopolitical_events(events, total_rounds=72, target_event_count=4)
+        triggers = [event["trigger_round"] for event in spread]
+
+        assert len(spread) == 4
+        assert triggers == sorted(triggers)
+        assert max(triggers) - min(triggers) >= 30

@@ -83,7 +83,7 @@ import { useRoute, useRouter } from 'vue-router'
 import GraphPanel from '../components/GraphPanel.vue'
 import Step1GraphBuild from '../components/Step1GraphBuild.vue'
 import Step2EnvSetup from '../components/Step2EnvSetup.vue'
-import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
+import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData, getGraphPreview } from '../api/graph'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import { useAppStore } from '../stores/app'
 
@@ -150,6 +150,14 @@ const addLog = (msg) => {
   if (systemLogs.value.length > 100) {
     systemLogs.value.shift()
   }
+}
+
+const getGraphNodeCount = (payload) => {
+  return payload?.total_node_count ?? payload?.node_count ?? payload?.nodes?.length ?? 0
+}
+
+const getGraphEdgeCount = (payload) => {
+  return payload?.total_edge_count ?? payload?.edge_count ?? payload?.edges?.length ?? 0
 }
 
 // --- Layout Methods ---
@@ -314,17 +322,33 @@ const fetchGraphData = async () => {
     // Refresh project info to check for graph_id
     const projRes = await getProject(currentProjectId.value)
     if (projRes.success && projRes.data.graph_id) {
-      const gRes = await getGraphData(projRes.data.graph_id)
+      projectData.value = projRes.data
+      const usePreview = projRes.data.status === 'graph_building'
+      const gRes = usePreview
+        ? await getGraphPreview(projRes.data.graph_id)
+        : await getGraphData(projRes.data.graph_id)
       // Graph still building — keep polling silently
       if (gRes.isStillProcessing) {
         console.log('⏳ Graph still building, will retry...')
         return
       }
       if (gRes.success) {
-        graphData.value = gRes.data
-        const nodeCount = gRes.data.node_count || gRes.data.nodes?.length || 0
-        const edgeCount = gRes.data.edge_count || gRes.data.edges?.length || 0
-        addLog(`Graph data refreshed. Nodes: ${nodeCount}, Edges: ${edgeCount}`)
+        const previousGraphData = graphData.value
+        const nextGraphData = gRes.data
+        const nodeCount = getGraphNodeCount(nextGraphData)
+        const edgeCount = getGraphEdgeCount(nextGraphData)
+        const previousNodeCount = getGraphNodeCount(previousGraphData)
+        const previousEdgeCount = getGraphEdgeCount(previousGraphData)
+        const previousPreview = previousGraphData?.is_preview
+        graphData.value = nextGraphData
+        if (
+          !previousGraphData ||
+          nodeCount !== previousNodeCount ||
+          edgeCount !== previousEdgeCount ||
+          nextGraphData.is_preview !== previousPreview
+        ) {
+          addLog(`${nextGraphData.is_preview ? 'Preview' : 'Graph'} data refreshed. Nodes: ${nodeCount}, Edges: ${edgeCount}`)
+        }
       }
     }
   } catch (err) {
@@ -394,7 +418,11 @@ const loadGraph = async (graphId) => {
 const refreshGraph = () => {
   if (projectData.value?.graph_id) {
     addLog('Manual graph refresh triggered.')
-    loadGraph(projectData.value.graph_id)
+    if (projectData.value.status === 'graph_building') {
+      fetchGraphData()
+    } else {
+      loadGraph(projectData.value.graph_id)
+    }
   }
 }
 

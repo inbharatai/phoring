@@ -30,10 +30,11 @@
           </div>
           <div class="header-right">
             <template v-if="graphData">
-              <span class="stat-item">{{ graphData.node_count || graphData.nodes?.length || 0 }} node</span>
+              <span class="stat-item">{{ getGraphNodeCount(graphData) }} node</span>
               <span class="stat-divider">|</span>
-              <span class="stat-item">{{ graphData.edge_count || graphData.edges?.length || 0 }} relation</span>
+              <span class="stat-item">{{ getGraphEdgeCount(graphData) }} relation</span>
               <span class="stat-divider">|</span>
+              <span v-if="graphData.is_preview" class="preview-pill">live preview</span>
             </template>
             <div class="action-buttons">
                 <button class="action-btn" @click="refreshGraph":disabled="graphLoading" title="refreshgraph">
@@ -53,7 +54,7 @@
             <!-- Build hint -->
             <div v-if="currentPhase === 1" class="graph-building-hint">
               <span class="building-dot"></span>
-               Update...
+              {{ graphData?.is_preview ? 'Live graph preview updating...' : 'Update...' }}
             </div>
             
             <!-- node/ -->
@@ -345,11 +346,11 @@
                 <div class="detail-label">Buildresult</div>
                 <div class="build-result">
                   <div class="result-item">
-                    <span class="result-value">{{ graphData.node_count }}</span>
+                    <span class="result-value">{{ getGraphNodeCount(graphData) }}</span>
                     <span class="result-label">entity nodes</span>
                   </div>
                   <div class="result-item">
-                    <span class="result-value">{{ graphData.edge_count }}</span>
+                    <span class="result-value">{{ getGraphEdgeCount(graphData) }}</span>
                     <span class="result-label">relation </span>
                   </div>
                   <div class="result-item">
@@ -417,7 +418,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData } from '../api/graph'
+import { generateOntology, getProject, buildGraph, getTaskStatus, getGraphData, getGraphPreview } from '../api/graph'
 import { createSimulation, listSimulations } from '../api/simulation'
 import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 import * as d3 from 'd3'
@@ -478,6 +479,14 @@ const entityTypes = computed(() => {
   
   return Object.values(typeMap)
 })
+
+const getGraphNodeCount = (payload) => {
+  return payload?.total_node_count ?? payload?.node_count ?? payload?.nodes?.length ?? 0
+}
+
+const getGraphEdgeCount = (payload) => {
+  return payload?.total_edge_count ?? payload?.edge_count ?? payload?.edges?.length ?? 0
+}
 
 // method
 const goHome = () => {
@@ -667,6 +676,7 @@ const loadProject = async () => {
       // round Build task
       if (response.data.status === 'graph_building' && response.data.graph_build_task_id) {
         currentPhase.value = 1
+        startGraphPolling()
         startPollingTask(response.data.graph_build_task_id)
       }
       
@@ -786,7 +796,8 @@ const fetchGraphData = async () => {
       }
       
       // Getgraphdata
-      const graphResponse = await getGraphData(graphId)
+      const usePreview = projectResponse.data.status === 'graph_building'
+      const graphResponse = usePreview ? await getGraphPreview(graphId) : await getGraphData(graphId)
 
       // Graph still building — keep polling silently
       if (graphResponse.isStillProcessing) {
@@ -796,13 +807,15 @@ const fetchGraphData = async () => {
       
       if (graphResponse.success && graphResponse.data) {
         const newData = graphResponse.data
-        const newNodeCount = newData.node_count || newData.nodes?.length || 0
-        const oldNodeCount = graphData.value?.node_count || graphData.value?.nodes?.length || 0
+        const newNodeCount = getGraphNodeCount(newData)
+        const oldNodeCount = getGraphNodeCount(graphData.value)
+        const newEdgeCount = getGraphEdgeCount(newData)
+        const oldEdgeCount = getGraphEdgeCount(graphData.value)
         
-        console.log('Fetching graph data, nodes:', newNodeCount, 'edges:', newData.edge_count || newData.edges?.length || 0)
+        console.log('Fetching graph data, nodes:', newNodeCount, 'edges:', newEdgeCount)
         
         // data Update 
-        if (newNodeCount!== oldNodeCount ||!graphData.value) {
+        if (newNodeCount!== oldNodeCount || newEdgeCount !== oldEdgeCount || newData.is_preview !== graphData.value?.is_preview ||!graphData.value) {
           graphData.value = newData
           await nextTick()
           renderGraph()
@@ -1338,6 +1351,15 @@ onUnmounted(() => {
 
 .stat-divider {
   color: #eee;
+}
+
+.preview-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  background: rgba(255, 107, 53, 0.12);
+  color: #c24d1f;
+  font-weight: 600;
 }
 
 .action-buttons {

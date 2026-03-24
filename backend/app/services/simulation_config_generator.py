@@ -17,6 +17,7 @@ Post-processing then calibrates the final config for stability and realism.
 
 import json
 import math
+import re
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -987,6 +988,12 @@ returnJSON format(do notmarkdown):
             1,
             int(time_config.total_simulation_hours * 60 / time_config.minutes_per_round),
         )
+        target_event_count = self._plan_geopolitical_event_count(total_rounds)
+        intelligence_brief = self._build_geopolitical_intelligence_brief(
+            simulation_requirement=simulation_requirement,
+            entities=entities,
+            context=context,
+        )
 
         today_str = datetime.now().strftime("%B %d, %Y")
 
@@ -1002,7 +1009,8 @@ returnJSON format(do notmarkdown):
                 data = svc.search_geopolitical_news(
                     simulation_requirement=simulation_requirement,
                     entities=entities,
-                    max_articles=5,
+                    max_articles=max(6, target_event_count + 2),
+                    additional_queries=intelligence_brief.get("search_queries", []),
                 )
                 real_context = (data.get("combined_text", "") or "")[:6000]
                 headlines_for_citation = data.get("headlines", [])
@@ -1040,6 +1048,13 @@ returnJSON format(do notmarkdown):
 
         # Extract temporal intelligence from the user's prompt
         temporal_context = self._extract_temporal_context(simulation_requirement)
+        intelligence_brief_json = json.dumps({
+            "priority_entities": intelligence_brief.get("priority_entities", []),
+            "priority_entity_types": intelligence_brief.get("priority_entity_types", []),
+            "topic_keywords": intelligence_brief.get("topic_keywords", []),
+            "regional_keywords": intelligence_brief.get("regional_keywords", []),
+            "search_queries": intelligence_brief.get("search_queries", []),
+        }, ensure_ascii=False, indent=2)
 
         # Build the real-world grounding block
         if web_intel_available:
@@ -1078,7 +1093,7 @@ Prefer risks that are specific to the named companies and institutions listed be
         prompt = f"""You are a senior geopolitical risk analyst producing disruption events
 for a simulation. Today's date is {today_str}.
 
-Generate 2-4 disruptive events that are SPECIFIC, PLAUSIBLE, and GROUNDED in the real
+Generate exactly {target_event_count} disruptive events that are SPECIFIC, PLAUSIBLE, and GROUNDED in the real
 world for the scenario below. Events will be injected at specific rounds during a
 {time_config.total_simulation_hours}-hour simulation ({total_rounds} rounds).
 
@@ -1097,6 +1112,10 @@ timeframe, or deadline, events should be plausible within that window.
 {entity_examples_str}
 
 Entity types present: {', '.join(entity_types)}
+
+## INTELLIGENCE BRIEF
+Use this to reason globally first, then localize to the scenario.
+{intelligence_brief_json}
 {real_world_block}
 
 Event categories: {', '.join(GEOPOLITICAL_CATEGORIES)}
@@ -1111,6 +1130,7 @@ Event categories: {', '.join(GEOPOLITICAL_CATEGORIES)}
 3. ENTITY GROUNDING: Reference specific entity names from the simulation where possible.
    "Tariffs on steel" should become "15% safeguard duty on steel imports affecting SAIL
    and Tata Steel" if those entities are in the simulation.
+    At least 70% of events should explicitly name one or more scenario entities or entity types.
 4. CAUSAL CHAIN: Each event description must explain the immediate mechanism of impact,
    not just state that something happened. HOW does this event affect the named entities?
 5. TEMPORAL SPREAD: Distribute trigger rounds across the timeline — early, mid, and late.
@@ -1128,6 +1148,7 @@ Return JSON only (no markdown fences):
             "category": "<category from list>",
             "title": "<specific event title, max 10 words>",
             "description": "<1-2 sentences: what happened, which mechanism, who is affected and how>",
+            "source_hint": "<headline or real-world anchor; required when live news is available>",
             "impact_factor": <float -1.0 to 1.0>,
             "affected_entity_types": ["<entity types impacted>"],
             "severity": "<low|medium|high|critical>"
@@ -1171,15 +1192,70 @@ Return JSON only (no markdown fences):
             "currency fluctuation", "currency devaluation",
         ]
 
+        entity_names = intelligence_brief.get("priority_entities", [])
+        entity_types_lower = {
+            entity_type.lower(): entity_type
+            for entity_type in intelligence_brief.get("priority_entity_types", [])
+        }
+        mechanism_markers = {
+            "sanction", "tariff", "ceasefire", "blockade", "export control", "repo rate",
+            "margin requirement", "wto", "shipping", "strait", "pipeline", "embargo",
+            "policy", "regulator", "regulatory", "cyber", "election", "strike",
+            "port", "customs", "central bank", "ministry", "oil", "gas",
+        }
+        category_keywords = {
+            "natural_disaster": ["earthquake", "flood", "storm", "wildfire", "cyclone"],
+            "armed_conflict": ["war", "missile", "drone", "conflict", "ceasefire", "military"],
+            "political_turmoil": ["cabinet", "protest", "coalition", "impeachment", "leadership"],
+            "trade_war": ["tariff", "export control", "trade", "customs", "import duty"],
+            "sanctions": ["sanction", "embargo", "blacklist", "restriction"],
+            "policy_change": ["policy", "mandate", "subsidy", "framework"],
+            "diplomatic_crisis": ["embassy", "diplomatic", "consulate", "envoy"],
+            "economic_shock": ["inflation", "fx", "currency", "bond", "bank", "yield"],
+            "pandemic": ["pandemic", "virus", "outbreak", "variant"],
+            "supply_chain_disruption": ["shipping", "port", "logistics", "container", "route"],
+            "election": ["election", "vote", "ballot", "poll"],
+            "regulatory_change": ["regulator", "regulatory", "circular", "compliance"],
+            "civil_unrest": ["riot", "strike", "unrest", "demonstration"],
+            "cyber_attack": ["cyber", "ransomware", "hack", "breach"],
+        }
+
+        def _infer_category(raw_category: Any, combined_text: str) -> str:
+            category = str(raw_category or "").strip().lower()
+            if category in GEOPOLITICAL_CATEGORIES:
+                return category
+            for candidate, markers in category_keywords.items():
+                if any(marker in combined_text for marker in markers):
+                    return candidate
+            return "economic_shock"
+
+        def _specificity_score(title: str, description: str, grounded_in_news: bool) -> int:
+            combined_text = f"{title} {description}".lower()
+            score = 0
+            if grounded_in_news:
+                score += 2
+            if any(entity_name.lower() in combined_text for entity_name in entity_names):
+                score += 3
+            if any(entity_type in combined_text for entity_type in entity_types_lower):
+                score += 1
+            if any(marker in combined_text for marker in mechanism_markers):
+                score += 2
+            if re.search(r"\b\d+(?:\.\d+)?%|\b\d+\s?(?:bps|basis points|million|billion)\b", combined_text):
+                score += 1
+            if re.search(r"\b(?:rbi|sebi|wto|opec|imf|fed|ecb|un|eu)\b", combined_text):
+                score += 1
+            return score
+
         def _validate_and_filter(raw_events):
             """Return (validated_events, rejected_titles)."""
             # If we have real headlines, relax the generic filter — an event matching
             # a real headline is NOT generic even if its title looks simple
             headline_text_lower = " ".join(headlines_for_citation).lower() if headlines_for_citation else ""
             ok, rejected = [], []
-            for evt in raw_events[:4]:
+            for evt in raw_events[:max(target_event_count * 2, target_event_count + 2)]:
                 title = str(evt.get("title", "Unnamed Event"))[:80]
-                description = str(evt.get("description", ""))[:300]
+                description = str(evt.get("description", ""))[:360]
+                source_hint = str(evt.get("source_hint", ""))[:180]
                 combined_text = f"{title} {description}".lower()
                 title_lower = title.lower()
 
@@ -1192,18 +1268,47 @@ Return JSON only (no markdown fences):
                         continue
 
                 is_generic = any(marker in title_lower for marker in GENERIC_TITLE_MARKERS)
+                grounded_in_news = headline_text_lower and any(
+                    word in headline_text_lower
+                    for word in [w for w in title_lower.split() if len(w) > 3]
+                )
+                specificity = _specificity_score(title, description, bool(grounded_in_news))
                 if is_generic:
-                    # If the topic appears in real headlines, it's grounded — don't reject
-                    title_words = [w for w in title_lower.split() if len(w) > 3]
-                    grounded_in_news = headline_text_lower and any(
-                        word in headline_text_lower for word in title_words
-                    )
-                    if not grounded_in_news:
+                    if specificity < 4:
                         logger.warning(f"Filtered generic event (lacks specificity): '{title}'")
                         rejected.append(title)
                         continue
                     else:
-                        logger.info(f"Generic-looking event kept (grounded in real headlines): '{title}'")
+                        logger.info(f"Generic-looking event kept after specificity check: '{title}'")
+
+                if web_intel_available and not source_hint and not grounded_in_news:
+                    logger.warning(f"Filtered ungrounded event without source hint: '{title}'")
+                    rejected.append(title)
+                    continue
+
+                if specificity < 3:
+                    logger.warning(f"Filtered low-specificity geopolitical event: '{title}'")
+                    rejected.append(title)
+                    continue
+
+                detected_types = [
+                    entity_type for key, entity_type in entity_types_lower.items()
+                    if key in combined_text
+                ]
+                affected_types = [
+                    str(entity_type)[:30]
+                    for entity_type in evt.get("affected_entity_types", [])[:5]
+                    if str(entity_type).lower() in entity_types_lower
+                ]
+                if not affected_types and detected_types:
+                    affected_types = detected_types[:3]
+                if not affected_types:
+                    affected_types = intelligence_brief.get("priority_entity_types", [])[:3]
+
+                if not affected_types and not grounded_in_news:
+                    logger.warning(f"Filtered event without entity or type grounding: '{title}'")
+                    rejected.append(title)
+                    continue
 
                 trigger = max(1, min(total_rounds, int(evt.get("trigger_round", 1))))
                 impact = max(-1.0, min(1.0, float(evt.get("impact_factor", 0.0))))
@@ -1215,13 +1320,12 @@ Return JSON only (no markdown fences):
 
                 ok.append({
                     "trigger_round": trigger,
-                    "category": str(evt.get("category", "other"))[:40],
+                    "category": _infer_category(evt.get("category", "other"), combined_text),
                     "title": title,
                     "description": description,
+                    "source_hint": source_hint,
                     "impact_factor": round(impact, 2),
-                    "affected_entity_types": [
-                        str(t)[:30] for t in evt.get("affected_entity_types", [])[:5]
-                    ],
+                    "affected_entity_types": affected_types,
                     "severity": severity,
                 })
                 logger.info(
@@ -1246,7 +1350,7 @@ Return JSON only (no markdown fences):
             all_rejected.extend(rejected)
 
             if validated:
-                return validated
+                return self._spread_geopolitical_events(validated, total_rounds, target_event_count)
 
             if not raw_events:
                 logger.warning("LLM returned zero geopolitical events — skipping.")
@@ -1271,6 +1375,137 @@ Return JSON only (no markdown fences):
 
         logger.warning("Geopolitical events: all retry attempts exhausted, no valid events produced.")
         return []
+
+    @staticmethod
+    def _plan_geopolitical_event_count(total_rounds: int) -> int:
+        """Scale geopolitical event count with simulation duration."""
+        return max(3, min(8, math.ceil(max(1, total_rounds) / 12)))
+
+    @staticmethod
+    def _extract_geopolitical_keywords(text: str, limit: int = 10) -> List[str]:
+        """Extract scenario keywords for geopolitical retrieval and grounding."""
+        keyword_patterns = [
+            r'\b(?:iran|israel|gaza|ukraine|russia|china|taiwan|india|pakistan|red sea|hormuz|opec|brics)\b',
+            r'\b(?:sanctions?|tariffs?|trade war|shipping|strait|oil|gas|energy|cyber|election|currency|inflation|supply chain)\b',
+            r'\b(?:semiconductor|banking|steel|defense|telecom|shipping|aviation|pharma|agriculture)\b',
+        ]
+        found = []
+        lowered = text.lower()
+        for pattern in keyword_patterns:
+            found.extend(match.group(0) for match in re.finditer(pattern, lowered, re.IGNORECASE))
+
+        title_case_matches = re.findall(r'\b(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b', text)
+        found.extend(title_case_matches)
+
+        unique = []
+        seen = set()
+        for keyword in found:
+            normalized = " ".join(keyword.lower().split())
+            if len(normalized) < 3 or normalized in seen:
+                continue
+            seen.add(normalized)
+            unique.append(keyword.strip())
+            if len(unique) >= limit:
+                break
+        return unique
+
+    @classmethod
+    def _build_geopolitical_intelligence_brief(
+        cls,
+        simulation_requirement: str,
+        entities: List[EntityNode],
+        context: str = "",
+    ) -> Dict[str, Any]:
+        """Build a scenario-aware intelligence brief and search plan."""
+        combined_text = "\n".join(part for part in [simulation_requirement, context[:3000]] if part)
+
+        priority_entities = []
+        seen_entities = set()
+        priority_entity_types = []
+        seen_types = set()
+        for entity in entities:
+            if entity.name and entity.name.lower() not in seen_entities and len(priority_entities) < 10:
+                priority_entities.append(entity.name)
+                seen_entities.add(entity.name.lower())
+            entity_type = entity.get_entity_type() or "Unknown"
+            if entity_type.lower() not in seen_types and len(priority_entity_types) < 6:
+                priority_entity_types.append(entity_type)
+                seen_types.add(entity_type.lower())
+
+        topic_keywords = cls._extract_geopolitical_keywords(combined_text, limit=10)
+        regional_keywords = [
+            keyword for keyword in topic_keywords
+            if keyword.lower() in {"iran", "israel", "gaza", "ukraine", "russia", "china", "taiwan", "india", "pakistan", "red sea", "hormuz"}
+        ][:4]
+
+        search_queries = [
+            "global geopolitical risk sanctions conflict shipping energy cyber latest news",
+            "global supply chain disruption trade policy sanctions election cyber risk latest news",
+        ]
+        if topic_keywords:
+            search_queries.append(" ".join(topic_keywords[:4]) + " latest news")
+        if regional_keywords:
+            search_queries.append(" ".join(regional_keywords[:3]) + " conflict sanctions shipping policy latest news")
+        if priority_entities:
+            search_queries.append(" ".join(priority_entities[:3]) + " regulation sanctions market impact news")
+        if priority_entity_types:
+            search_queries.append(" ".join(priority_entity_types[:3]) + " sector geopolitical policy disruption news")
+
+        deduped_queries = []
+        seen_queries = set()
+        for query in search_queries:
+            normalized = " ".join(query.lower().split())
+            if normalized not in seen_queries:
+                deduped_queries.append(query[:220])
+                seen_queries.add(normalized)
+
+        return {
+            "priority_entities": priority_entities,
+            "priority_entity_types": priority_entity_types,
+            "topic_keywords": topic_keywords,
+            "regional_keywords": regional_keywords,
+            "search_queries": deduped_queries[:6],
+        }
+
+    @staticmethod
+    def _spread_geopolitical_events(
+        events: List[Dict[str, Any]],
+        total_rounds: int,
+        target_event_count: int,
+    ) -> List[Dict[str, Any]]:
+        """Spread accepted events across the simulation timeline."""
+        if not events:
+            return []
+
+        deduped = []
+        seen_titles = set()
+        for event in sorted(events, key=lambda item: (item.get("trigger_round", 1), -abs(item.get("impact_factor", 0)))):
+            title_key = str(event.get("title", "")).strip().lower()
+            if not title_key or title_key in seen_titles:
+                continue
+            seen_titles.add(title_key)
+            deduped.append(dict(event))
+            if len(deduped) >= target_event_count:
+                break
+
+        anchor_rounds = [
+            max(1, min(total_rounds, round(total_rounds * (idx + 1) / (len(deduped) + 1))))
+            for idx in range(len(deduped))
+        ]
+
+        spread = []
+        previous_round = 0
+        for event, anchor in zip(deduped, anchor_rounds):
+            trigger_round = max(1, min(total_rounds, int(event.get("trigger_round", anchor))))
+            if abs(trigger_round - anchor) > max(2, total_rounds // max(6, len(deduped) * 2)):
+                trigger_round = anchor
+            if trigger_round <= previous_round:
+                trigger_round = min(total_rounds, previous_round + 1)
+            event["trigger_round"] = trigger_round
+            spread.append(event)
+            previous_round = trigger_round
+
+        return spread
 
     def _generate_agent_configs_batch(
         self,
