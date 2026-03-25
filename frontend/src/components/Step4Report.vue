@@ -184,8 +184,8 @@
           </div>
 
           <!-- Next Step Button - complete -->
-          <button v-if="isComplete" class="next-step-btn" @click="goToInteraction">
-            <span> </span>
+          <button v-if="isComplete" class="next-step-btn" @click="goToInteraction" @mouseenter="pauseAutoRedirect" @mouseleave="resumeAutoRedirect">
+            <span>{{ autoRedirectCountdown > 0 ? `Interaction in ${autoRedirectCountdown}s` : 'Continue to Interaction' }}</span>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
@@ -463,8 +463,45 @@ const emit = defineEmits(['add-log', 'update-status'])
 
 // Navigation
 const goToInteraction = () => {
+  clearAutoRedirect()
   if (props.reportId) {
     router.push({ name: 'Interaction', params: { reportId: props.reportId } })
+  }
+}
+
+const startAutoRedirect = () => {
+  autoRedirectCountdown.value = 4
+  autoRedirectTimer = setInterval(() => {
+    autoRedirectCountdown.value--
+    if (autoRedirectCountdown.value <= 0) {
+      goToInteraction()
+    }
+  }, 1000)
+}
+
+const clearAutoRedirect = () => {
+  if (autoRedirectTimer) {
+    clearInterval(autoRedirectTimer)
+    autoRedirectTimer = null
+  }
+  autoRedirectCountdown.value = 0
+}
+
+const pauseAutoRedirect = () => {
+  if (autoRedirectTimer) {
+    clearInterval(autoRedirectTimer)
+    autoRedirectTimer = null
+  }
+}
+
+const resumeAutoRedirect = () => {
+  if (autoRedirectCountdown.value > 0) {
+    autoRedirectTimer = setInterval(() => {
+      autoRedirectCountdown.value--
+      if (autoRedirectCountdown.value <= 0) {
+        goToInteraction()
+      }
+    }, 1000)
   }
 }
 
@@ -480,6 +517,8 @@ const expandedContent = ref(new Set())
 const expandedLogs = ref(new Set())
 const collapsedSections = ref(new Set())
 const isComplete = ref(false)
+const autoRedirectCountdown = ref(0)
+let autoRedirectTimer = null
 const executiveSummary = ref('')
 const consensusValidation = ref(null)
 const startTime = ref(null)
@@ -2111,6 +2150,7 @@ const fetchAgentLog = async () => {
             currentSectionIndex.value = null // Ensure loading status
             emit('update-status', 'completed')
             stopPolling()
+            startAutoRedirect()
             // Fetch executive summary from completed report
             ;(async () => {
               try {
@@ -2250,6 +2290,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopPolling()
+  clearAutoRedirect()
 })
 
 watch(() => props.reportId, (newId) => {

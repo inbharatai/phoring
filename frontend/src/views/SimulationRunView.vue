@@ -26,7 +26,7 @@
       <div class="header-right">
         <div class="workflow-step">
           <span class="step-num">Step 3/5</span>
-          <span class="step-name">start simulation</span>
+          <span class="step-name">Simulation</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator":class="statusClass">

@@ -26,7 +26,7 @@
       <div class="header-right">
         <div class="workflow-step">
           <span class="step-num">Step 5/5</span>
-          <span class="step-name"> </span>
+          <span class="step-name">Interaction</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator":class="statusClass">

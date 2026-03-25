@@ -25,8 +25,8 @@
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step 4/5</span>
-          <span class="step-name">reportgenerate</span>
+          <span class="step-num">Step {{ currentStatus === 'completed' ? '5' : '4' }}/5</span>
+          <span class="step-name">{{ currentStatus === 'completed' ? 'Report Complete' : 'Report Generation' }}</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator":class="statusClass">
