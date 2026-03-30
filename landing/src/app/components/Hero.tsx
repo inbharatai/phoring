@@ -137,10 +137,10 @@ export function Hero() {
                   {item.value}
                 </span>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-[0.1em] text-text-tertiary font-mono leading-none">
+                  <span className="text-[10px] uppercase tracking-[0.1em] text-text-secondary font-mono leading-none">
                     {item.unit}
                   </span>
-                  <span className="text-[9px] uppercase tracking-[0.08em] text-text-tertiary/60 font-mono">
+                  <span className="text-[9px] uppercase tracking-[0.08em] text-text-tertiary font-mono">
                     {item.label}
                   </span>
                 </div>
