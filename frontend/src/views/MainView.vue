@@ -456,7 +456,7 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: #0a0a0f;
   overflow: hidden;
   font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
 }
@@ -464,12 +464,13 @@ onUnmounted(() => {
 /* Header */
 .app-header {
   height: 60px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(12px);
   z-index: 100;
   position: relative;
 }
@@ -489,6 +490,7 @@ onUnmounted(() => {
   font-size: 18px;
   letter-spacing: 1px;
   cursor: pointer;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 .brand-logo {
@@ -499,10 +501,11 @@ onUnmounted(() => {
 
 .view-switcher {
   display: flex;
-  background: #F5F5F5;
+  background: rgba(255, 255, 255, 0.04);
   padding: 4px;
   border-radius: 6px;
   gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .switch-btn {
@@ -511,16 +514,16 @@ onUnmounted(() => {
   padding: 6px 16px;
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: rgba(255, 255, 255, 0.4);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .switch-btn.active {
-  background: #FFF;
-  color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.87);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .status-indicator {
@@ -528,7 +531,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 500;
 }
 
@@ -548,33 +551,33 @@ onUnmounted(() => {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #999;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .step-name {
   font-weight: 700;
-  color: #000;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #CCC;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.status-indicator.processing .dot { background: #4CAF50; animation: pulse 1s infinite; }
-.status-indicator.processing { color: #4CAF50; }
-.status-indicator.completed .dot { background: #4CAF50; }
-.status-indicator.completed { color: #4CAF50; }
-.status-indicator.error .dot { background: #F44336; }
-.status-indicator.error { color: #F44336; }
+.status-indicator.processing .dot { background: #34d399; animation: pulse 1s infinite; }
+.status-indicator.processing { color: #34d399; }
+.status-indicator.completed .dot { background: #34d399; }
+.status-indicator.completed { color: #34d399; }
+.status-indicator.error .dot { background: #f87171; }
+.status-indicator.error { color: #f87171; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
@@ -584,16 +587,18 @@ onUnmounted(() => {
   display: flex;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
+  min-width: 0;
   transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
   will-change: width, opacity, transform;
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 </style>

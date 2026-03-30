@@ -339,22 +339,22 @@ const startSimulation = () => {
 
 <style scoped>
 :root {
-  --paper: #f6f2ea;
-  --ink: #10141f;
-  --coral: #db5d3b;
-  --teal: #0d6f70;
-  --line: #d6cec1;
-  --panel: rgba(255, 255, 255, 0.68);
-  --shadow: 0 16px 40px rgba(16, 20, 31, 0.08);
+  --paper: #0a0a0f;
+  --ink: rgba(255, 255, 255, 0.87);
+  --coral: #f87171;
+  --teal: #638cff;
+  --line: rgba(255, 255, 255, 0.08);
+  --panel: rgba(255, 255, 255, 0.03);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   --display: 'Space Grotesk', 'Noto Sans SC', sans-serif;
   --mono: 'JetBrains Mono', 'Noto Sans SC', monospace;
 }
 
 .home-shell {
   min-height: 100vh;
-  background: radial-gradient(circle at 12% 18%, #f9e4d9 0%, transparent 45%),
-    radial-gradient(circle at 80% 2%, #dceced 0%, transparent 35%),
-    var(--paper);
+  background: radial-gradient(circle at 12% 18%, rgba(99, 140, 255, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 80% 2%, rgba(52, 211, 153, 0.04) 0%, transparent 35%),
+    #0a0a0f;
   color: var(--ink);
   padding: 26px clamp(16px, 3vw, 40px) 48px;
   position: relative;
@@ -370,7 +370,7 @@ const startSimulation = () => {
 .ambient-a {
   width: 220px;
   height: 220px;
-  border: 1px solid rgba(13, 111, 112, 0.2);
+  border: 1px solid rgba(99, 140, 255, 0.12);
   border-radius: 36% 64% 70% 30% / 38% 31% 69% 62%;
   top: 64px;
   right: 6%;
@@ -380,7 +380,7 @@ const startSimulation = () => {
 .ambient-b {
   width: 170px;
   height: 170px;
-  border: 1px solid rgba(219, 93, 59, 0.22);
+  border: 1px solid rgba(248, 113, 113, 0.12);
   border-radius: 70% 30% 37% 63% / 41% 59% 41% 59%;
   bottom: 100px;
   left: 4%;
@@ -388,18 +388,11 @@ const startSimulation = () => {
 }
 
 @keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(4deg);
-  }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(4deg); }
 }
 
-.topbar,
-.main-grid,
-.history-wrap {
+.topbar, .main-grid, .history-wrap {
   position: relative;
   z-index: 1;
 }
@@ -457,7 +450,7 @@ const startSimulation = () => {
 .panel {
   background: var(--panel);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
 
@@ -488,7 +481,7 @@ const startSimulation = () => {
 }
 
 .subtitle {
-  color: rgba(16, 20, 31, 0.76);
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1.6;
   max-width: 62ch;
 }
@@ -506,6 +499,7 @@ const startSimulation = () => {
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .hero-logo-wrap {
@@ -534,9 +528,7 @@ const startSimulation = () => {
   background: var(--panel);
 }
 
-.pipeline-card h2,
-.workbench h2,
-.features-card h2 {
+.pipeline-card h2, .workbench h2, .features-card h2 {
   font-family: var(--display);
   font-size: 1.2rem;
   letter-spacing: -0.01em;
@@ -548,14 +540,13 @@ const startSimulation = () => {
 }
 
 .fc-sub {
-  color: rgba(16, 20, 31, 0.7);
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.62;
   max-width: 78ch;
   margin-top: 6px;
   font-size: 0.9rem;
 }
 
-/* ── Feature cards ───────────────────────────────── */
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -566,7 +557,7 @@ const startSimulation = () => {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.02);
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
   animation: cardRise 0.5s ease both;
 }
@@ -580,8 +571,8 @@ const startSimulation = () => {
 
 .feature-grid article:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(16, 20, 31, 0.09);
-  border-color: rgba(13, 111, 112, 0.36);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+  border-color: rgba(99, 140, 255, 0.3);
 }
 
 .fg-icon-row {
@@ -597,8 +588,8 @@ const startSimulation = () => {
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--teal);
-  background: rgba(13, 111, 112, 0.08);
-  border: 1px solid rgba(13, 111, 112, 0.18);
+  background: rgba(99, 140, 255, 0.08);
+  border: 1px solid rgba(99, 140, 255, 0.18);
   border-radius: 4px;
   padding: 3px 7px;
   flex-shrink: 0;
@@ -613,12 +604,11 @@ const startSimulation = () => {
 
 .feature-grid p {
   font-size: 0.86rem;
-  color: rgba(16, 20, 31, 0.67);
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.56;
   margin-top: 5px;
 }
 
-/* ── Tech-stack strip ────────────────────────────── */
 .tech-stack-row {
   display: flex;
   align-items: center;
@@ -633,7 +623,7 @@ const startSimulation = () => {
   font-family: var(--mono);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
-  color: rgba(16, 20, 31, 0.42);
+  color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   margin-right: 4px;
 }
@@ -644,7 +634,7 @@ const startSimulation = () => {
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 4px 10px;
@@ -658,7 +648,7 @@ a.ts-chip:hover {
 }
 
 .ts-sep {
-  color: var(--line);
+  color: rgba(255, 255, 255, 0.15);
   font-family: var(--mono);
   font-size: 0.9rem;
   line-height: 1;
@@ -676,12 +666,12 @@ a.ts-chip:hover {
   display: grid;
   grid-template-columns: 42px 1fr;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .pipeline-list span {
   font-family: var(--mono);
-  color: var(--coral);
+  color: #638cff;
   font-weight: 700;
 }
 
@@ -692,7 +682,7 @@ a.ts-chip:hover {
 
 .pipeline-list p {
   font-size: 0.88rem;
-  color: rgba(16, 20, 31, 0.72);
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.45;
 }
 
@@ -703,16 +693,16 @@ a.ts-chip:hover {
 }
 
 .workbench-head p {
-  color: rgba(16, 20, 31, 0.76);
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 16px;
 }
 
 .dropzone {
-  border: 1px dashed #b8aea1;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   min-height: 126px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   margin-bottom: 14px;
   transition: all 0.22s ease;
@@ -720,7 +710,7 @@ a.ts-chip:hover {
 
 .dropzone.drag-over {
   border-color: var(--teal);
-  background: rgba(13, 111, 112, 0.06);
+  background: rgba(99, 140, 255, 0.06);
 }
 
 .dropzone-empty {
@@ -737,7 +727,7 @@ a.ts-chip:hover {
 }
 
 .dropzone-empty small {
-  color: rgba(16, 20, 31, 0.66);
+  color: rgba(255, 255, 255, 0.4);
   font-family: var(--mono);
 }
 
@@ -752,7 +742,7 @@ a.ts-chip:hover {
   justify-content: space-between;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.03);
   padding: 8px 10px;
 }
 
@@ -763,7 +753,8 @@ a.ts-chip:hover {
 
 .remove-btn {
   border: 1px solid var(--line);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
   padding: 5px 8px;
   border-radius: 8px;
   cursor: pointer;
@@ -777,15 +768,15 @@ a.ts-chip:hover {
   font-family: var(--mono);
   font-size: 0.74rem;
   letter-spacing: 0.08em;
-  color: rgba(16, 20, 31, 0.74);
+  color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
 }
 
 .scenario-input {
   width: 100%;
-  border: 1px solid #b8aea1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.03);
   font-family: var(--mono);
   padding: 14px;
   line-height: 1.55;
@@ -804,7 +795,7 @@ a.ts-chip:hover {
   border: none;
   border-radius: 12px;
   padding: 14px 16px;
-  background: linear-gradient(92deg, #1f2937 0%, #0d6f70 100%);
+  background: linear-gradient(92deg, #1a2340 0%, #2a5fff 100%);
   color: #fff;
   font-family: var(--display);
   font-weight: 700;
@@ -815,12 +806,12 @@ a.ts-chip:hover {
 
 .launch-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(13, 111, 112, 0.25);
+  box-shadow: 0 8px 18px rgba(99, 140, 255, 0.3);
 }
 
 .launch-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.35;
 }
 
 .validation-errors {
@@ -833,9 +824,9 @@ a.ts-chip:hover {
 .validation-error {
   font-family: var(--mono);
   font-size: 0.8rem;
-  color: #b91c1c;
-  background: rgba(185, 28, 28, 0.07);
-  border: 1px solid rgba(185, 28, 28, 0.2);
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
   border-radius: 8px;
   padding: 8px 12px;
   line-height: 1.4;
@@ -846,58 +837,27 @@ a.ts-chip:hover {
   margin: 26px auto 0;
 }
 
-.reveal-1,
-.reveal-2,
-.reveal-3,
-.reveal-4,
-.reveal-5,
-.reveal-6 {
+.reveal-1, .reveal-2, .reveal-3, .reveal-4, .reveal-5, .reveal-6 {
   animation: reveal 0.55s ease both;
 }
 
-.reveal-2 {
-  animation-delay: 0.06s;
-}
-
-.reveal-3 {
-  animation-delay: 0.12s;
-}
-
-.reveal-4 {
-  animation-delay: 0.18s;
-}
-
-.reveal-5 {
-  animation-delay: 0.24s;
-}
-
-.reveal-6 {
-  animation-delay: 0.30s;
-}
+.reveal-2 { animation-delay: 0.06s; }
+.reveal-3 { animation-delay: 0.12s; }
+.reveal-4 { animation-delay: 0.18s; }
+.reveal-5 { animation-delay: 0.24s; }
+.reveal-6 { animation-delay: 0.30s; }
 
 @keyframes reveal {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes cardRise {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Status / transparency section ────────────────── */
+/* Status / transparency section */
 .status-card {
   grid-column: 1 / 3;
   border-radius: 24px;
@@ -935,7 +895,7 @@ a.ts-chip:hover {
 
 .status-col ul li {
   font-size: 0.84rem;
-  color: rgba(16, 20, 31, 0.72);
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1.5;
   padding-left: 14px;
   position: relative;
@@ -961,11 +921,7 @@ a.ts-chip:hover {
     grid-template-columns: 1fr;
   }
 
-  .hero-card,
-  .pipeline-card,
-  .features-card,
-  .status-card,
-  .workbench {
+  .hero-card, .pipeline-card, .features-card, .status-card, .workbench {
     grid-column: 1 / 2;
   }
 
