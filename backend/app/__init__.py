@@ -175,23 +175,42 @@ def create_app(config_class=Config):
             status['warnings'] = config_errors
         return jsonify(status)
     
-    # --- Serve Vue frontend (production static build) ---
+    # --- Serve Next.js landing page and Vue frontend (production static builds) ---
 
+    from flask import send_from_directory
+
+    landing_dist = os.path.join(os.path.dirname(__file__), '../../landing/dist')
     frontend_dist = os.path.join(os.path.dirname(__file__), '../../frontend/dist')
-    if os.path.isdir(frontend_dist):
-        from flask import send_from_directory
 
-        @app.route('/', defaults={'path': ''})
-        @app.route('/<path:path>')
+    if os.path.isdir(frontend_dist):
+        @app.route('/app', defaults={'path': ''})
+        @app.route('/app/<path:path>')
         def serve_frontend(path):
-            """Serve Vue SPA; fall back to index.html for client-side routing."""
+            """Serve Vue SPA under /app; fall back to index.html for client-side routing."""
             file_path = os.path.join(frontend_dist, path)
             if path and os.path.isfile(file_path):
                 return send_from_directory(frontend_dist, path)
             return send_from_directory(frontend_dist, 'index.html')
 
         if should_log_startup:
-            logger.info(f"Serving frontend from {frontend_dist}")
+            logger.info(f"Serving Vue frontend from {frontend_dist} at /app")
+
+    if os.path.isdir(landing_dist):
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_landing(path):
+            """Serve Next.js static export at root; API and /app routes take priority."""
+            file_path = os.path.join(landing_dist, path)
+            if path and os.path.isfile(file_path):
+                return send_from_directory(landing_dist, path)
+            # Next.js static export: try path/index.html for directories
+            dir_index = os.path.join(landing_dist, path, 'index.html')
+            if path and os.path.isfile(dir_index):
+                return send_from_directory(os.path.join(landing_dist, path), 'index.html')
+            return send_from_directory(landing_dist, 'index.html')
+
+        if should_log_startup:
+            logger.info(f"Serving landing page from {landing_dist} at /")
 
     if should_log_startup:
         logger.info("Phoring Backend initialized successfully")

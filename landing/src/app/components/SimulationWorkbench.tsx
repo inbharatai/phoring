@@ -7,7 +7,7 @@ const ACCEPTED_EXTENSIONS = ['pdf', 'md', 'txt']
 const MAX_FILE_SIZE_MB = 50
 const MIN_PROMPT_LENGTH = 20
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
-const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_BASE = process.env.NEXT_PUBLIC_APP_URL || '/app'
 
 interface FileEntry {
   file: File

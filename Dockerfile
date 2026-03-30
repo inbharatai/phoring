@@ -7,7 +7,16 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# ── Stage 2: Production Python image ───────────────────────────────────────
+# ── Stage 2: Build Next.js landing page (static export) ─────────────────────
+FROM node:20-alpine AS landing-build
+
+WORKDIR /build
+COPY landing/package.json landing/package-lock.json ./
+RUN npm ci
+COPY landing/ ./
+RUN npm run build
+
+# ── Stage 3: Production Python image ───────────────────────────────────────
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -21,6 +30,9 @@ COPY backend/ ./backend/
 
 # Copy built frontend into backend static serving directory
 COPY --from=frontend-build /build/dist ./frontend/dist
+
+# Copy built landing into backend static serving directory
+COPY --from=landing-build /build/out ./landing/dist
 
 # Copy root files needed at runtime
 COPY run.py ./
