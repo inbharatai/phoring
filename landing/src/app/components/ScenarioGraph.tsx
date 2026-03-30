@@ -252,14 +252,14 @@ export function ScenarioGraph() {
           const fontSize = Math.max(7, Math.min(9.5, w * 0.012))
           ctx.font = `600 ${fontSize}px var(--font-mono)`
           ctx.textAlign = 'center'
-          ctx.fillStyle = `rgba(${r},${g},${b},${labAlpha * 0.75})`
+          ctx.fillStyle = `rgba(${r},${g},${b},${labAlpha * 0.92})`
           ctx.fillText(n.label, px, py - rr - 10)
 
           // Tech badge
           if (n.tech) {
             const techSize = Math.max(6, Math.min(7.5, w * 0.009))
             ctx.font = `400 ${techSize}px var(--font-mono)`
-            ctx.fillStyle = `rgba(${r},${g},${b},${labAlpha * 0.35})`
+            ctx.fillStyle = `rgba(${r},${g},${b},${labAlpha * 0.60})`
             ctx.fillText(n.tech, px, py - rr - 1)
           }
         }
@@ -323,7 +323,7 @@ export function ScenarioGraph() {
 
         for (const st of stages) {
           const [r, g, b] = st.color
-          ctx.fillStyle = `rgba(${r},${g},${b},${regionAlpha * 0.25})`
+          ctx.fillStyle = `rgba(${r},${g},${b},${regionAlpha * 0.55})`
           ctx.fillText(st.label, 6, ny(st.y) + 3)
         }
       }
