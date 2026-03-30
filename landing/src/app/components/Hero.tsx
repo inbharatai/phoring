@@ -41,7 +41,7 @@ export function Hero() {
       {/* ── Content ── */}
       <div className="container-lg relative z-10 grid lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-16 items-center py-20 lg:py-28">
         {/* ── Text column ── */}
-        <div className="max-w-xl">
+        <div className="relative z-10 max-w-xl">
           {/* Logo + eyebrow */}
           <motion.div
             className="flex items-center gap-3.5 mb-10"
@@ -150,20 +150,44 @@ export function Hero() {
         </div>
 
         {/* ── Scenario graph visual column ── */}
+        {/*
+          Mobile (<lg): absolute background layer behind text (z-[2]),
+                        reduced opacity, contained by overflow-hidden,
+                        gradient-masked at bottom so lower content stays clean.
+          Desktop (lg+): normal in-flow grid column, full opacity, full presence.
+        */}
         <motion.div
-          className="relative h-[320px] sm:h-[420px] lg:h-[560px] xl:h-[620px]"
+          className="
+            absolute inset-x-0 top-0 h-[72vh] z-[2] opacity-[0.18] pointer-events-none overflow-hidden
+            lg:relative lg:inset-auto lg:h-[560px] xl:h-[620px]
+            lg:opacity-100 lg:pointer-events-auto lg:z-auto lg:overflow-visible
+          "
           initial={{ opacity: 0, scale: 0.94, x: 30 }}
           animate={{ opacity: 1, scale: 1, x: 0 }}
           transition={{ duration: 1.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Atmospheric glow behind graph */}
-          <div className="absolute inset-0 -m-8 rounded-3xl bg-gradient-to-br from-accent-blue/[0.03] via-transparent to-accent-cyan/[0.02] blur-xl" aria-hidden="true" />
+          {/* Atmospheric glow — -m-8 only on desktop where it is contained by the grid */}
+          <div
+            className="absolute inset-0 lg:-m-8 rounded-3xl bg-gradient-to-br from-accent-blue/[0.03] via-transparent to-accent-cyan/[0.02] blur-xl"
+            aria-hidden="true"
+          />
+
+          {/* Mobile-only gradient mask — recedes graph before headline content starts */}
+          <div
+            className="absolute inset-0 z-10 pointer-events-none lg:hidden"
+            style={{
+              background:
+                'linear-gradient(to bottom, transparent 25%, rgba(5,5,7,0.55) 60%, rgba(5,5,7,0.92) 85%)',
+            }}
+            aria-hidden="true"
+          />
+
           <ScenarioGraph />
         </motion.div>
       </div>
 
       {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-bg via-bg/80 to-transparent pointer-events-none z-10" />
+      <div className="absolute bottom-0 inset-x-0 h-40 sm:h-48 bg-gradient-to-t from-bg via-bg/80 to-transparent pointer-events-none z-10" />
     </section>
   )
 }
