@@ -70,23 +70,23 @@ function SignalCanvas({ r, g, b }: { r: number; g: number; b: number }) {
 const CAPABILITIES = [
   {
     tag: 'SIGNAL',
-    title: 'Signal Processing',
+    title: 'Signal Ingestion',
     description:
-      'Ingests documents, extracts entities and relationships, and constructs a structured knowledge graph. Raw information becomes queryable intelligence.',
+      'Ingests public, policy, and market sources, extracts entities and relationships, and builds a traceable knowledge graph for instability monitoring.',
     r: 61, g: 107, b: 255,
   },
   {
     tag: 'MODEL',
     title: 'Scenario Simulation',
     description:
-      'Deploys LLM-generated agent personas into synthetic social environments. Multi-agent dynamics model how events, opinions, and decisions could unfold.',
+      'Deploys agent personas into synthetic environments to test how geopolitical and policy shocks could propagate across narratives and risk drivers.',
     r: 34, g: 211, b: 238,
   },
   {
     tag: 'OUTPUT',
-    title: 'Structured Foresight',
+    title: 'Risk Scenarios',
     description:
-      'Generates source-cited intelligence reports with confidence scoring. Every claim traces back to evidence — graph data, web sources, or simulation outcomes.',
+      'Generates source-cited risk scenarios with confidence-scored reports and early-warning alerts. Every claim traces back to evidence.',
     r: 16, g: 185, b: 129,
   },
 ]
@@ -110,10 +110,10 @@ export function WhatPhoring() {
               What Phoring Does
             </span>
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
-              From documents and scenarios
+              From signals and evidence
               <br />
               <span className="text-text-secondary">
-                to simulation-backed intelligence.
+                to early-warning scenarios.
               </span>
             </h2>
           </div>

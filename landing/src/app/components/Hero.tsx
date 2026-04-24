@@ -66,7 +66,7 @@ export function Hero() {
                 PHORING
               </span>
               <span className="font-mono text-[9px] tracking-[0.12em] text-text-tertiary uppercase">
-                Scenario Intelligence
+                Risk Intelligence
               </span>
             </div>
           </motion.div>
@@ -78,9 +78,9 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.25, ease }}
           >
-            From raw signals,
+            AI early-warning system
             <br />
-            <span className="text-gradient">structured foresight.</span>
+            <span className="text-gradient">for financial instability.</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -90,9 +90,9 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4, ease }}
           >
-            Build knowledge graphs from documents. Run multi-agent 
-            simulations. Generate source-cited intelligence reports 
-            with confidence scoring.
+            Phoring helps macro and risk teams detect early signs of instability.
+            It turns geopolitical events, policy shifts, market context, and public
+            signals into source-grounded risk scenarios.
           </motion.p>
 
           {/* CTAs */}
@@ -106,7 +106,7 @@ export function Hero() {
               href="#start"
               className="group relative px-8 py-4 text-[15px] font-semibold bg-accent-blue text-white rounded-xl overflow-hidden transition-all duration-400 hover:shadow-[0_0_60px_rgba(61,107,255,0.35)] hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="relative z-10">Start Forecasting</span>
+              <span className="relative z-10">Request Demo</span>
               <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
             </a>
             <a

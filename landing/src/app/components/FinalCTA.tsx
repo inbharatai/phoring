@@ -105,18 +105,18 @@ export function FinalCTA() {
           </div>
 
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-blue/70 block mb-6">
-            Ready to Begin
+            Ready for Early Warning
           </span>
 
           <h2 className="text-[1.75rem] sm:text-[2.5rem] lg:text-[3.25rem] font-bold tracking-[-0.03em] leading-[1.08] text-text-primary mb-6">
-            Start mapping
+            Start detecting
             <br />
-            <span className="text-gradient">what&apos;s ahead.</span>
+            <span className="text-gradient">instability early.</span>
           </h2>
 
           <p className="text-[1.05rem] text-text-secondary leading-relaxed max-w-md mx-auto mb-10">
-            Upload your documents, define a scenario, and let Phoring build the
-            intelligence.
+            Upload your sources, define a risk scenario, and let Phoring generate
+            source-grounded alerts and confidence-scored reports.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -124,7 +124,7 @@ export function FinalCTA() {
               href="/process/new"
               className="group relative px-9 py-4 text-[15px] font-semibold bg-accent-blue text-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_rgba(61,107,255,0.3)] hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="relative z-10">Launch Simulation</span>
+              <span className="relative z-10">Request Demo</span>
               <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
             </a>
             <a
@@ -133,7 +133,7 @@ export function FinalCTA() {
               rel="noopener noreferrer"
               className="px-9 py-4 text-[15px] text-text-secondary border border-border rounded-xl transition-all duration-300 hover:text-text-primary hover:border-border-hover hover:bg-bg-elevated/50"
             >
-              View on GitHub
+              View Sample Report
             </a>
           </div>
         </ScrollReveal>

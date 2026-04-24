@@ -57,7 +57,7 @@ export function Footer() {
             </a>
             <span className="w-px h-3 bg-border/50" />
             <span className="font-mono text-[10px] text-text-tertiary/50">
-              Open-Source Scenario Intelligence
+              Scenario intelligence for financial and geopolitical risk
             </span>
           </div>
 

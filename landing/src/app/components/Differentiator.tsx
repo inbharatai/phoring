@@ -5,8 +5,8 @@ import { ScrollReveal } from './ScrollReveal'
 const POINTS = [
   {
     title: 'Not a chatbot.',
-    subtitle: 'A simulation engine.',
-    desc: "Phoring doesn't generate answers from a single model prompt. It runs structured multi-agent simulations where synthetic personas interact, debate, and surface emergent patterns across configurable rounds.",
+    subtitle: 'A scenario intelligence system.',
+    desc: "Phoring doesn't answer from a single prompt. It runs multi-agent simulations to explore how policy and geopolitical shocks could ripple across markets and narratives.",
     accent: '#3d6bff',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -19,9 +19,9 @@ const POINTS = [
     ),
   },
   {
-    title: 'Not prediction from thin air.',
+    title: 'Not generic summaries.',
     subtitle: 'Grounded in evidence.',
-    desc: 'Every forecast traces back to document-sourced entities, web-retrieved intelligence, and simulation-observed dynamics. The quality of the input directly shapes the output.',
+    desc: 'Every scenario traces back to documents, policy signals, market context, and web intelligence. Evidence quality directly shapes the output.',
     accent: '#22d3ee',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -40,7 +40,7 @@ const POINTS = [
   {
     title: 'Not a black box.',
     subtitle: 'Source-cited and scored.',
-    desc: 'Reports include inline references [1][2][3] to specific sources. Each section carries a confidence tag — HIGH, MEDIUM, or LOW — based on how many independent data points support it.',
+    desc: 'Reports include inline references [1][2][3] to specific sources. Confidence scoring reflects evidence strength, not certainty.',
     accent: '#10b981',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -56,7 +56,7 @@ const POINTS = [
   {
     title: 'Not a single perspective.',
     subtitle: 'Multi-agent, multi-model.',
-    desc: 'Optional multi-model consensus validation runs independent LLMs as validators — scoring on coherence, precedent, and risk before producing a consensus summary appended to the report.',
+    desc: 'Optional multi-model consensus validation runs independent models to check coherence, precedent, and risk framing before adding a consensus note.',
     accent: '#e5a60a',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -89,7 +89,7 @@ export function Differentiator() {
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
               Different by architecture,
               <br />
-              <span className="text-text-secondary">not by marketing.</span>
+              <span className="text-text-secondary">not by hype.</span>
             </h2>
           </div>
         </ScrollReveal>

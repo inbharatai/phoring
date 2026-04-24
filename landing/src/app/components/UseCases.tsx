@@ -4,8 +4,8 @@ import { ScrollReveal } from './ScrollReveal'
 
 const CASES = [
   {
-    title: 'Policy Impact Analysis',
-    desc: 'Model how regulatory changes propagate through public discourse. Simulate stakeholder reactions across platforms before policy announcements.',
+    title: 'Policy Shock Assessment',
+    desc: 'Assess how regulatory, fiscal, and central-bank actions could ripple across sectors, institutions, and narratives.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -16,8 +16,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Market Reaction Forecasting',
-    desc: 'Feed financial signals and market context into the pipeline. Surface how trader sentiment and media narratives could evolve after key events.',
+    title: 'Market Narrative Shifts',
+    desc: 'Track how market narratives and risk sentiment shift around events and policy signals, with evidence-backed scenarios.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -28,8 +28,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Crisis Response Modeling',
-    desc: 'Upload crisis documentation and simulate rapid-response scenarios. Identify which narratives gain traction and where sentiment fractures.',
+    title: 'Financial Instability Monitoring',
+    desc: 'Monitor early signs of stress across markets, funding conditions, and sentiment to trigger early-warning scenarios.',
     accent: '#e5a60a',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -40,8 +40,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Technology Adoption',
-    desc: 'Map the stakeholder landscape around emerging technologies. Simulate adoption patterns, resistance points, and discourse evolution over time.',
+    title: 'Scenario-Based Risk Reporting',
+    desc: 'Produce committee-ready reports that link scenarios to sources, assumptions, and confidence scores.',
     accent: '#10b981',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -58,8 +58,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Geopolitical Scenarios',
-    desc: 'Build entity graphs from geopolitical briefs. Run scenario simulations across multiple possible outcomes with confidence-weighted forecasts.',
+    title: 'Geopolitical Risk Tracking',
+    desc: 'Track geopolitical events, sanctions, and conflict signals to surface downstream financial exposure.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -71,8 +71,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Public Discourse Simulation',
-    desc: 'Understand how information spreads through social platforms. Model opinion formation, polarization dynamics, and consensus pathways.',
+    title: 'Contagion Pathway Analysis',
+    desc: 'Model how shocks propagate across sectors, jurisdictions, and narratives to identify spillover pathways.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -109,10 +109,10 @@ export function UseCases() {
               Applications
             </span>
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
-              Built for structured thinking
+              Built for financial risk teams
               <br />
               <span className="text-text-secondary">
-                about uncertain futures.
+                monitoring instability and policy shocks.
               </span>
             </h2>
           </div>

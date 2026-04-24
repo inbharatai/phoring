@@ -7,7 +7,7 @@ const STAGES = [
   {
     num: '01',
     title: 'Graph Build',
-    desc: 'Upload documents — PDF, Markdown, or text. Phoring parses content, extracts entities and relationships via LLM-driven ontology generation, and constructs a knowledge graph in Zep.',
+    desc: 'Ingest public, policy, and market sources (PDF, Markdown, or text). Phoring extracts entities and relationships, then builds an evidence-grade knowledge graph in Zep.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -23,7 +23,7 @@ const STAGES = [
   {
     num: '02',
     title: 'Agent Setup',
-    desc: 'LLM-generated agent profiles emerge from graph entities. Each carries a persona, stance, behavioral parameters, and platform-specific interaction models tuned to the scenario.',
+    desc: 'LLM-generated agent profiles reflect institutions, stakeholders, and narratives from the evidence layer, with scenario-specific behaviors and constraints.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -37,7 +37,7 @@ const STAGES = [
   {
     num: '03',
     title: 'Simulation',
-    desc: 'OASIS deploys agents into synthetic Twitter and Reddit environments. Actions, reactions, and emergent discourse unfold across configurable rounds — streamed in real time.',
+    desc: 'OASIS runs agents through synthetic market and public-discourse environments. Actions, reactions, and narrative shifts unfold across configurable rounds.',
     accent: '#e5a60a',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -51,7 +51,7 @@ const STAGES = [
   {
     num: '04',
     title: 'Intelligence Report',
-    desc: 'The Report Agent synthesizes graph data, web intelligence, and simulation outcomes into a structured document — source-cited with inline references and per-section confidence scoring.',
+    desc: 'The Report Agent synthesizes graph evidence, web intelligence, and simulation outcomes into source-cited risk scenarios with confidence scoring and alerts.',
     accent: '#10b981',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -84,7 +84,7 @@ export function PipelineFlow() {
               Four-stage pipeline.
               <br />
               <span className="text-text-secondary">
-                Each step is discrete and inspectable.
+                Signals in, risk scenarios out.
               </span>
             </h2>
           </div>
