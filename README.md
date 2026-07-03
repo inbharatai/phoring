@@ -12,11 +12,11 @@
 [![OASIS](https://img.shields.io/badge/Simulation-OASIS_0.2.5-f97316?style=for-the-badge)](#simulation-engine)
 [![Zep](https://img.shields.io/badge/Memory-Zep_Cloud-8b5cf6?style=for-the-badge)](#knowledge-graph)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#quick-start)
-[![Live](https://img.shields.io/badge/Live-phoring.onrender.com-10b981?style=for-the-badge)](https://phoring.onrender.com)
+[![Live](https://img.shields.io/badge/Live-phoring.inbharat.ai-10b981?style=for-the-badge)](http://35.200.201.102)
 
 **Upload documents. Describe a scenario. Get a simulation-backed, source-cited prediction report.**
 
-[Live Demo](https://phoring.onrender.com) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
+[Live Demo](http://35.200.201.102) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
 
 </div>
 
@@ -59,9 +59,13 @@ Documents + Scenario Objective
 
 ## Live Demo
 
-**[phoring.onrender.com](https://phoring.onrender.com)**
+**Live: [http://35.200.201.102](http://35.200.201.102)**  *(canonical: https://phoring.inbharat.ai once the A record is pointed at `35.200.201.102`)*
 
-Deployed on Render (Docker, Pro plan). Upload a document, walk through the five-step pipeline, and get a simulation-backed forecast. No local setup required.
+Deployed on Google Cloud Compute Engine — a Dockerized full-stack image on an
+`e2-standard-2` VM with a 100 GB persistent disk (mounted at
+`/app/backend/uploads`) holding uploads, reports, simulation state, and task
+files. Upload a document, walk through the five-step pipeline, and get a
+simulation-backed forecast. No local setup required.
 
 ---
 
@@ -80,7 +84,7 @@ Deployed on Render (Docker, Pro plan). Upload a document, walk through the five-
 
 ## How It Works
 
-> **Interactive 3D version** of this graph available on the [live demo](https://phoring.onrender.com)
+> **Interactive 3D version** of this graph available on the [live demo](http://35.200.201.102)
 
 ```mermaid
 flowchart LR
@@ -422,6 +426,9 @@ docker compose up -d
 # → http://localhost:5001 (backend)
 ```
 
+> **Google Cloud deployment (production):** see [`deploy/gce/README.md`](deploy/gce/README.md) —
+> a one-command Compute Engine setup (e2-standard-2 VM + 100 GB persistent disk + Caddy HTTPS).
+
 ### 5. Verify
 
 ```bash
@@ -468,8 +475,8 @@ All ID parameters are validated against strict regex patterns — malformed IDs 
 | **Knowledge Graph** | Zep Cloud 3.13.0 |
 | **Web Intelligence** | Serper API + Event Registry |
 | **LLM** | Any OpenAI SDK-compatible provider (default: GPT-4o-mini) |
-| **Deployment** | Docker (multi-stage build) · Render |
-| **CI** | GitHub → Render auto-deploy on push |
+| **Deployment** | Docker (multi-stage build) · Google Cloud Compute Engine |
+| **CI** | GitHub Actions builds & pushes Docker image to GHCR on tag push |
 
 ---
 
@@ -565,6 +572,6 @@ frontend/
 
 <div align="center">
 
-**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](https://phoring.onrender.com) · info@inbharat.ai
+**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](http://35.200.201.102) · info@inbharat.ai
 
 </div>
