@@ -12,7 +12,7 @@
 [![OASIS](https://img.shields.io/badge/Simulation-OASIS_0.2.5-f97316?style=for-the-badge)](#simulation-engine)
 [![Zep](https://img.shields.io/badge/Memory-Zep_Cloud-8b5cf6?style=for-the-badge)](#knowledge-graph)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#quick-start)
-[![Live](https://img.shields.io/badge/Live-phoring.inbharat.ai-10b981?style=for-the-badge)](http://35.200.201.102)
+[![Live](https://img.shields.io/badge/Live-GCE_35.200.201.102-10b981?style=for-the-badge)](http://35.200.201.102)
 
 **Upload documents. Describe a scenario. Get a simulation-backed, source-cited prediction report.**
 
@@ -131,7 +131,7 @@ flowchart LR
 
     subgraph CONSENSUS["CONSENSUS VALIDATION"]
         consensus(("Consensus Engine"))
-        ai1{{"Primary AI (GPT-4o)"}}
+        ai1{{"Primary AI (GPT-4o-mini)"}}
         ai2{{"Claude (Validator 2)"}}
         ai3{{"Gemini (Validator 3)"}}
     end

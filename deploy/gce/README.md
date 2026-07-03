@@ -102,5 +102,6 @@ the API under `/api/*`.
 ## Submission framing
 
 > Phoring AI is hosted on Google Cloud Compute Engine with persistent disk
-> storage, uses Gemini for reasoning and forecast synthesis, and exposes a
-> Dockerized full-stack prediction-intelligence platform.
+> storage, uses OpenAI GPT-4o-mini for primary reasoning and Google Gemini
+> 2.0 Flash for multi-model consensus validation, and exposes a Dockerized
+> full-stack prediction-intelligence platform.
