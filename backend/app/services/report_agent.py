@@ -1624,7 +1624,7 @@ class ReportAgent:
             response = self.llm.chat(
                 messages=messages,
                 temperature=0.5,
-                max_tokens=4096
+                max_tokens=8192
             )
 
             # Guard against empty LLM responses.
@@ -1838,7 +1838,7 @@ class ReportAgent:
         response = self.llm.chat(
             messages=messages,
             temperature=0.5,
-            max_tokens=4096
+            max_tokens=8192
         )
 
         # Handle final forced response.
