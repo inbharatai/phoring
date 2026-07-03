@@ -158,3 +158,10 @@ body::after {
 .card-shine:hover::before {
   left: 100%;
 }
+
+/* ───────────────────────────────────────────────────
+   Scenario progress ring — slow rotating dashed accent
+   ─────────────────────────────────────────────────── */
+@keyframes ring-rotate {
+  to { transform: rotate(360deg); }
+}

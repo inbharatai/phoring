@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react'
+import { useState, useRef, useCallback, useEffect, type DragEvent, type ChangeEvent } from 'react'
 import { ScrollReveal } from './ScrollReveal'
 
 const ACCEPTED_EXTENSIONS = ['pdf', 'md', 'txt']
@@ -22,7 +22,9 @@ export function SimulationWorkbench() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   /* ── Validation ── */
   const promptTooShort = prompt.trim().length > 0 && prompt.trim().length < MIN_PROMPT_LENGTH
@@ -81,8 +83,12 @@ export function SimulationWorkbench() {
   const handleLaunch = async () => {
     if (!canSubmit) return
     setLoading(true)
+    setDone(false)
     setError(null)
     setSuccess(null)
+
+    const controller = new AbortController()
+    abortRef.current = controller
 
     try {
       const formData = new FormData()
@@ -93,6 +99,7 @@ export function SimulationWorkbench() {
       const res = await fetch(`${API_BASE}/api/graph/ontology/generate`, {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       })
 
       const json = await res.json()
@@ -102,9 +109,9 @@ export function SimulationWorkbench() {
       }
 
       const projectId = json.data?.project_id
-      setSuccess(`Project created — redirecting to workspace…`)
       setFiles([])
       setPrompt('')
+      setDone(true) // ring snaps to 100% + "Opening workspace…"
 
       // Redirect to the Vue frontend process page.
       // The MainView loadProject() detects status=ontology_generated
@@ -113,11 +120,22 @@ export function SimulationWorkbench() {
         window.location.href = `${APP_BASE}/process/${projectId}`
       }, 1200)
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
       const msg = err instanceof Error ? err.message : 'Something went wrong'
       setError(msg)
     } finally {
       setLoading(false)
     }
+  }
+
+  /* ── Cancel an in-flight submit (abort fetch, reset to the form) ── */
+  const handleCancel = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setLoading(false)
+    setDone(false)
+    setSuccess(null)
+    setError(null)
   }
 
   return (
@@ -312,43 +330,34 @@ export function SimulationWorkbench() {
               </div>
             )}
 
-            {/* ── Launch button ── */}
-            <button
-              type="button"
-              onClick={handleLaunch}
-              disabled={!canSubmit}
-              className={`
-                group relative w-full mt-8 px-8 py-4 text-[15px] font-semibold rounded-xl
-                overflow-hidden transition-all duration-300
-                ${
-                  canSubmit
-                    ? 'bg-accent-blue text-white hover:shadow-[0_0_60px_rgba(61,107,255,0.3)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
-                    : 'bg-bg-surface text-text-tertiary border border-border cursor-not-allowed'
-                }
-              `}
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
-                      <path
-                        d="M12 2a10 10 0 019.95 9"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    Initializing…
-                  </>
-                ) : (
-                  'Start Simulation'
+            {/* ── Launch / progress ── */}
+            {loading || done ? (
+              <div className="mt-8">
+                <ScenarioProgress done={done} onCancel={handleCancel} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLaunch}
+                disabled={!canSubmit}
+                className={`
+                  group relative w-full mt-8 px-8 py-4 text-[15px] font-semibold rounded-xl
+                  overflow-hidden transition-all duration-300
+                  ${
+                    canSubmit
+                      ? 'bg-accent-blue text-white hover:shadow-[0_0_60px_rgba(61,107,255,0.3)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
+                      : 'bg-bg-surface text-text-tertiary border border-border cursor-not-allowed'
+                  }
+                `}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  Start Simulation
+                </span>
+                {canSubmit && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
                 )}
-              </span>
-              {canSubmit && !loading && (
-                <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
-              )}
-            </button>
+              </button>
+            )}
 
             {/* ── Subtle help text ── */}
             <div className="mt-6 flex items-center justify-center gap-4 flex-wrap">
@@ -365,5 +374,160 @@ export function SimulationWorkbench() {
         </ScrollReveal>
       </div>
     </section>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   ScenarioProgress — on-brand "building your scenario" panel.
+   Estimated-progress ring (caps at 90% while pending, snaps to 100% on `done`)
+   + a live knowledge-graph motif that lights up as the ring fills + rotating
+   stage labels + an elapsed mm:ss timer + an honest "2–3 min" estimate + a
+   Cancel affordance. Pure frontend — consumes no backend progress signal, so
+   it can never lie about completion (never hits 100% before the server returns).
+   ─────────────────────────────────────────────────────────────────────────── */
+const ESTIMATE_SECONDS = 150
+
+function ScenarioProgress({ done, onCancel }: { done: boolean; onCancel: () => void }) {
+  const [progress, setProgress] = useState(0)
+  const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    if (done) return
+    const start = performance.now()
+    const id = window.setInterval(() => {
+      const el = (performance.now() - start) / 1000
+      setElapsed(el)
+      setProgress(Math.min(el / ESTIMATE_SECONDS, 1) * 90) // cap at 90% while pending
+    }, 200)
+    return () => window.clearInterval(id)
+  }, [done])
+
+  useEffect(() => {
+    if (done) setProgress(100) // snap to 100% on success — "Opening workspace…"
+  }, [done])
+
+  const shownPct = done ? 100 : Math.min(progress, 90)
+  const mm = Math.floor(elapsed / 60).toString().padStart(2, '0')
+  const ss = Math.floor(elapsed % 60).toString().padStart(2, '0')
+
+  const stage = done
+    ? 'Opening workspace…'
+    : shownPct >= 90
+      ? 'Finalizing — almost there'
+      : shownPct >= 70
+        ? 'Generating scenario ontology'
+        : shownPct >= 45
+          ? 'Mapping relationships'
+          : shownPct >= 20
+            ? 'Extracting entities'
+            : 'Parsing document'
+
+  // Knowledge-graph motif: 6 nodes around a circle; more activate as pct grows.
+  const RADIUS = 46
+  const NODES = Array.from({ length: 6 }, (_, i) => {
+    const ang = (-90 + i * 60) * (Math.PI / 180)
+    return { x: 100 + RADIUS * Math.cos(ang), y: 100 + RADIUS * Math.sin(ang) }
+  })
+  const EDGES: [number, number][] = [
+    [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], // hexagon perimeter
+    [0, 3], [1, 4], // cross-links
+  ]
+  const activeCount = Math.ceil((shownPct / 90) * NODES.length)
+  const nodeActive = (i: number) => i < activeCount
+  const edgeActive = (a: number, b: number) => nodeActive(a) && nodeActive(b)
+  const CIRC = 2 * Math.PI * 88
+  const dashOffset = CIRC * (1 - shownPct / 100)
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className="relative w-[180px] h-[180px]">
+        <svg viewBox="0 0 200 200" className="w-full h-full">
+          {/* slowly-rotating dashed accent ring */}
+          <circle
+            cx="100"
+            cy="100"
+            r="94"
+            fill="none"
+            stroke="rgba(61,107,255,0.18)"
+            strokeWidth="1"
+            strokeDasharray="2 6"
+            style={{ animation: 'ring-rotate 12s linear infinite', transformOrigin: '100px 100px' }}
+          />
+          {/* track */}
+          <circle cx="100" cy="100" r="88" fill="none" stroke="#1a1a28" strokeWidth="6" />
+          {/* progress arc */}
+          <circle
+            cx="100"
+            cy="100"
+            r="88"
+            fill="none"
+            stroke="#3d6bff"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={CIRC}
+            strokeDashoffset={dashOffset}
+            style={{
+              transform: 'rotate(-90deg)',
+              transformOrigin: '100px 100px',
+              transition: 'stroke-dashoffset 0.4s ease-out',
+              filter: 'drop-shadow(0 0 6px rgba(61,107,255,0.45))',
+            }}
+          />
+          {/* knowledge-graph edges */}
+          {EDGES.map(([a, b], i) => (
+            <line
+              key={`e${i}`}
+              x1={NODES[a].x}
+              y1={NODES[a].y}
+              x2={NODES[b].x}
+              y2={NODES[b].y}
+              stroke="rgba(34,211,238,0.5)"
+              strokeWidth="1"
+              strokeLinecap="round"
+              style={{ opacity: edgeActive(a, b) ? 1 : 0, transition: 'opacity 0.5s ease' }}
+            />
+          ))}
+          {/* knowledge-graph nodes */}
+          {NODES.map((n, i) => (
+            <circle
+              key={`n${i}`}
+              cx={n.x}
+              cy={n.y}
+              r="4"
+              fill={nodeActive(i) ? '#22d3ee' : 'rgba(74,74,96,0.5)'}
+              style={{
+                opacity: nodeActive(i) ? 1 : 0.25,
+                transition: 'opacity 0.5s ease, fill 0.5s ease',
+                filter: nodeActive(i) ? 'drop-shadow(0 0 4px rgba(34,211,238,0.6))' : 'none',
+              }}
+            />
+          ))}
+        </svg>
+        {/* center readout */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-2xl font-bold tabular-nums text-text-primary">
+            {Math.round(shownPct)}%
+          </span>
+          <span className="font-mono text-[10px] text-text-tertiary tabular-nums mt-0.5">
+            {mm}:{ss}
+          </span>
+        </div>
+      </div>
+
+      <p className="mt-5 text-sm font-medium text-text-primary">{stage}</p>
+      <p className="mt-1.5 font-mono text-[10px] tracking-wider uppercase text-text-tertiary">
+        {done ? 'Redirecting to workspace' : 'This usually takes 2–3 minutes'}
+      </p>
+
+      {!done && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="mt-5 font-mono text-[10px] uppercase tracking-wider text-text-tertiary hover:text-text-secondary transition-colors duration-200"
+        >
+          Cancel
+        </button>
+      )}
+    </div>
   )
 }
