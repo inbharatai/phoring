@@ -1,0 +1,14 @@
+# Phoring — Caddy reverse proxy (reference copy; the live file is generated
+# on the VM by vm-setup.sh, which picks the domain block if DOMAIN is set
+# and falls back to :80 when it is not).
+#
+# Replace REPLACE_YOUR_DOMAIN with your real host (A record -> static IP),
+# then `sudo systemctl restart caddy`. Caddy provisions Let's Encrypt TLS
+# automatically on the first request.
+
+REPLACE_YOUR_DOMAIN {
+    encode gzip zstd
+    reverse_proxy 127.0.0.1:10000 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

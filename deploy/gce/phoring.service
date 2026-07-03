@@ -1,0 +1,23 @@
+# Reference systemd unit (the live copy is written to /etc/systemd/system/
+# by vm-setup.sh). Kept in the repo for inspection.
+[Unit]
+Description=Phoring full-stack container (landing + app + api)
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+TimeoutStartSec=180
+ExecStartPre=-/usr/bin/docker rm -f phoring
+ExecStart=/usr/bin/docker run --name phoring \
+  --env-file /opt/phoring/.env \
+  -p 127.0.0.1:10000:10000 \
+  -v /mnt/phoring-data:/app/backend/uploads \
+  --restart unless-stopped \
+  ghcr.io/inbharatai/phoring:latest
+ExecStop=/usr/bin/docker stop phoring
+
+[Install]
+WantedBy=multi-user.target
