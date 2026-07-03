@@ -60,10 +60,10 @@ systemctl enable --now docker
 mkdir -p /opt/phoring
 if [ ! -f /opt/phoring/.env.example ]; then
   cat > /opt/phoring/.env.example <<'ENV'
-# ===== Primary LLM (Gemini, per submission framing) =====
+# ===== Primary LLM (Gemini 2.5 Pro — strongest reasoning model) =====
 LLM_API_KEY=your_gemini_api_key_here
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-LLM_MODEL_NAME=gemini-2.0-flash
+LLM_MODEL_NAME=gemini-2.5-pro
 
 # ===== Zep Cloud (required — knowledge graph memory) =====
 ZEP_API_KEY=your_zep_api_key_here
@@ -72,10 +72,10 @@ ZEP_API_KEY=your_zep_api_key_here
 SERPER_API_KEY=
 NEWS_API_KEY=
 
-# ===== Optional multi-AI consensus validators =====
+# ===== Multi-AI consensus validators (cross-family = real diversity) =====
 LLM_VALIDATOR_2_API_KEY=
-LLM_VALIDATOR_2_BASE_URL=https://api.anthropic.com/v1
-LLM_VALIDATOR_2_MODEL_NAME=claude-sonnet-4-20250514
+LLM_VALIDATOR_2_BASE_URL=https://api.openai.com/v1
+LLM_VALIDATOR_2_MODEL_NAME=gpt-4o-mini
 LLM_VALIDATOR_3_API_KEY=
 LLM_VALIDATOR_3_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 LLM_VALIDATOR_3_MODEL_NAME=gemini-2.0-flash
