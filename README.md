@@ -11,7 +11,7 @@
 [![Vue 3](https://img.shields.io/badge/Frontend-Vue_3-22c55e?style=for-the-badge&logo=vuedotjs&logoColor=white)](#architecture)
 [![OASIS](https://img.shields.io/badge/Simulation-OASIS_0.2.5-f97316?style=for-the-badge)](#simulation-engine)
 [![Zep](https://img.shields.io/badge/Memory-Zep_Cloud-8b5cf6?style=for-the-badge)](#knowledge-graph)
-[![Primary LLM](https://img.shields.io/badge/Primary_LLM-Gemini_2.5_Pro-8b5cf6?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
+[![Primary LLM](https://img.shields.io/badge/Primary_LLM-Gemini_2.5_Flash-8b5cf6?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
 [![Validator 2](https://img.shields.io/badge/Validator_2-GPT_4o_mini-10a37f?style=for-the-badge&logo=openai&logoColor=white)](#multi-ai-consensus-validation)
 [![Validator 3](https://img.shields.io/badge/Validator_3-Gemini_2.0_Flash-06b6d4?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
 [![Web Intel](https://img.shields.io/badge/Web_Intel-Serper-3b82f6?style=for-the-badge)](#web-intelligence)
@@ -135,7 +135,7 @@ flowchart LR
 
     subgraph CONSENSUS["CONSENSUS VALIDATION"]
         consensus(("Consensus Engine"))
-        ai1{{"Primary AI (Gemini 2.5 Pro)"}}
+        ai1{{"Primary AI (Gemini 2.5 Flash)"}}
         ai2{{"GPT-4o-mini (Validator 2)"}}
         ai3{{"Gemini (Validator 3)"}}
     end
@@ -326,7 +326,7 @@ Each section receives a confidence level (HIGH / MEDIUM / LOW) based on citation
 Up to 3 independent LLM validators score predictions on logical coherence, historical precedent, completeness, and risk factors:
 
 ```
-Primary (Gemini 2.5 Pro)  Validator 2 (GPT-4o-mini)  Validator 3 (Gemini 2.0 Flash)
+Primary (Gemini 2.5 Flash)  Validator 2 (GPT-4o-mini)  Validator 3 (Gemini 2.0 Flash)
      │                      │                        │
      └──────────────────────┴────────────────────────┘
                             ▼
@@ -385,11 +385,11 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-Required keys (any OpenAI SDK-compatible provider — live deploy uses Google Gemini 2.5 Pro):
+Required keys (any OpenAI SDK-compatible provider — live deploy uses Google Gemini 2.5 Flash):
 ```env
 LLM_API_KEY=your_gemini_api_key
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-LLM_MODEL_NAME=gemini-2.5-pro
+LLM_MODEL_NAME=gemini-2.5-flash
 ZEP_API_KEY=your_zep_api_key
 ```
 
@@ -478,7 +478,7 @@ All ID parameters are validated against strict regex patterns — malformed IDs 
 | **Simulation** | OASIS 0.2.5 + CAMEL-AI 0.2.78 |
 | **Knowledge Graph** | Zep Cloud 3.13.0 |
 | **Web Intelligence** | Serper API + Event Registry |
-| **LLM** | Any OpenAI SDK-compatible provider · live: Gemini 2.5 Pro (primary) + GPT-4o-mini & Gemini 2.0 Flash (consensus) |
+| **LLM** | Any OpenAI SDK-compatible provider · live: Gemini 2.5 Flash (primary) + GPT-4o-mini & Gemini 2.0 Flash (consensus) |
 | **Deployment** | Docker (multi-stage build) · Google Cloud Compute Engine |
 | **CI** | GitHub Actions builds & pushes Docker image to GHCR on tag push |
 
