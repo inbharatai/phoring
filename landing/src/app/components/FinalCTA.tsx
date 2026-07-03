@@ -105,18 +105,18 @@ export function FinalCTA() {
           </div>
 
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-blue/70 block mb-6">
-            Ready for Early Warning
+            Ready to Forecast
           </span>
 
           <h2 className="text-[1.75rem] sm:text-[2.5rem] lg:text-[3.25rem] font-bold tracking-[-0.03em] leading-[1.08] text-text-primary mb-6">
-            Start detecting
+            Start predicting
             <br />
-            <span className="text-gradient">instability early.</span>
+            <span className="text-gradient">what happens next.</span>
           </h2>
 
           <p className="text-[1.05rem] text-text-secondary leading-relaxed max-w-md mx-auto mb-10">
-            Upload your sources, define a risk scenario, and let Phoring generate
-            source-grounded alerts and confidence-scored reports.
+            Upload your sources, describe any scenario, and let Phoring generate
+            a simulation-backed, source-cited forecast with confidence scores.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

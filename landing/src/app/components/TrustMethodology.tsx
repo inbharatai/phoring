@@ -43,7 +43,7 @@ const METHODOLOGY = [
     num: '06',
     accent: '#22d3ee',
     detail:
-      'Optional. Up to 3 independent LLM validators score predictions on coherence, precedent, and risk. A consensus summary is appended to the final report.',
+      'Optional. Up to 3 independent LLM validators score forecasts on coherence, precedent, and completeness. A consensus summary is appended to the final report.',
   },
 ]
 

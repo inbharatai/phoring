@@ -66,7 +66,7 @@ export function Hero() {
                 PHORING
               </span>
               <span className="font-mono text-[9px] tracking-[0.12em] text-text-tertiary uppercase">
-                Risk Intelligence
+                Decision Intelligence
               </span>
             </div>
           </motion.div>
@@ -78,9 +78,9 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.25, ease }}
           >
-            AI early-warning system
+            AI scenario engine
             <br />
-            <span className="text-gradient">for financial instability.</span>
+            <span className="text-gradient">for anything you can describe.</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -90,9 +90,9 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4, ease }}
           >
-            Phoring helps macro and risk teams detect early signs of instability.
-            It turns geopolitical events, policy shifts, market context, and public
-            signals into source-grounded risk scenarios.
+            Phoring turns your documents and a plain-language scenario into a
+            multi-agent simulation, then a source-cited forecast. Predict markets,
+            policy, product launches, elections, public reaction — anything.
           </motion.p>
 
           {/* CTAs */}

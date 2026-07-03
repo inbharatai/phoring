@@ -72,21 +72,21 @@ const CAPABILITIES = [
     tag: 'SIGNAL',
     title: 'Signal Ingestion',
     description:
-      'Ingests public, policy, and market sources, extracts entities and relationships, and builds a traceable knowledge graph for instability monitoring.',
+      'Ingests your documents plus live web sources, extracts entities and relationships, and builds a traceable knowledge graph for the scenario you want to predict.',
     r: 61, g: 107, b: 255,
   },
   {
     tag: 'MODEL',
     title: 'Scenario Simulation',
     description:
-      'Deploys agent personas into synthetic environments to test how geopolitical and policy shocks could propagate across narratives and risk drivers.',
+      'Deploys agent personas into synthetic environments to test how a scenario could actually play out — how people react, how narratives shift, how decisions propagate.',
     r: 34, g: 211, b: 238,
   },
   {
     tag: 'OUTPUT',
-    title: 'Risk Scenarios',
+    title: 'Source-Cited Forecasts',
     description:
-      'Generates source-cited risk scenarios with confidence-scored reports and early-warning alerts. Every claim traces back to evidence.',
+      'Generates source-cited forecasts with confidence-scored reports. Every claim traces back to documents, live web sources, and simulation outcomes.',
     r: 16, g: 185, b: 129,
   },
 ]
@@ -110,10 +110,10 @@ export function WhatPhoring() {
               What Phoring Does
             </span>
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
-              From signals and evidence
+              From documents and a prompt
               <br />
               <span className="text-text-secondary">
-                to early-warning scenarios.
+                to a simulation-backed forecast.
               </span>
             </h2>
           </div>

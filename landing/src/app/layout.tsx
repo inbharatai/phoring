@@ -15,12 +15,12 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Phoring — Financial Instability Early Warning',
+  title: 'Phoring — Predict Anything. Source-Cited Scenario Forecasts',
   description:
-    'AI early-warning and scenario intelligence for financial instability and geopolitical risk. Source-grounded risk scenarios, confidence-scored reports, and alerts.',
+    'Phoring is a universal decision-intelligence engine. Upload documents, describe any scenario, and get a simulation-backed, source-cited forecast with confidence scoring and multi-AI consensus.',
   openGraph: {
-    title: 'Phoring — Financial Instability Early Warning',
-    description: 'Detect early signs of financial instability from geopolitical, policy, and market signals. Source-cited scenarios with confidence scoring.',
+    title: 'Phoring — Predict Anything. Source-Cited Scenario Forecasts',
+    description: 'From documents to simulation-backed forecasts. Multi-agent simulation, knowledge graphs, and source-cited prediction reports — for any scenario you can describe.',
     type: 'website',
   },
 }

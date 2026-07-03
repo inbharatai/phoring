@@ -4,8 +4,8 @@ import { ScrollReveal } from './ScrollReveal'
 
 const CASES = [
   {
-    title: 'Policy Shock Assessment',
-    desc: 'Assess how regulatory, fiscal, and central-bank actions could ripple across sectors, institutions, and narratives.',
+    title: 'Policy & Regulatory Impact',
+    desc: 'Assess how a regulation, ruling, or central-bank action could ripple across sectors, institutions, and stakeholders.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -16,8 +16,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Market Narrative Shifts',
-    desc: 'Track how market narratives and risk sentiment shift around events and policy signals, with evidence-backed scenarios.',
+    title: 'Market & Sentiment Forecasting',
+    desc: 'Forecast how market narratives, prices, and sentiment could shift around an event, earnings release, or policy signal.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -28,8 +28,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Financial Instability Monitoring',
-    desc: 'Monitor early signs of stress across markets, funding conditions, and sentiment to trigger early-warning scenarios.',
+    title: 'Risk & Stress-Testing',
+    desc: 'Stress-test a scenario for early signs of stress across markets, funding, operations, or public confidence.',
     accent: '#e5a60a',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -40,8 +40,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Scenario-Based Risk Reporting',
-    desc: 'Produce committee-ready reports that link scenarios to sources, assumptions, and confidence scores.',
+    title: 'Elections & Public Opinion',
+    desc: 'Model how candidates, narratives, and events could move public opinion, turnout, and coalition dynamics.',
     accent: '#10b981',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -58,8 +58,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Geopolitical Risk Tracking',
-    desc: 'Track geopolitical events, sanctions, and conflict signals to surface downstream financial exposure.',
+    title: 'Geopolitical & Supply-Chain Exposure',
+    desc: 'Track geopolitical events, sanctions, and conflicts to surface downstream exposure across supply chains and markets.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -71,8 +71,8 @@ const CASES = [
     ),
   },
   {
-    title: 'Contagion Pathway Analysis',
-    desc: 'Model how shocks propagate across sectors, jurisdictions, and narratives to identify spillover pathways.',
+    title: 'Product, Adoption & Contagion',
+    desc: 'Simulate how a product launch, adoption curve, or controversy could spread across communities and channels.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -109,10 +109,10 @@ export function UseCases() {
               Applications
             </span>
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
-              Built for financial risk teams
+              Built for any team that needs
               <br />
               <span className="text-text-secondary">
-                monitoring instability and policy shocks.
+                to know what happens next.
               </span>
             </h2>
           </div>

@@ -6,7 +6,7 @@ const POINTS = [
   {
     title: 'Not a chatbot.',
     subtitle: 'A scenario intelligence system.',
-    desc: "Phoring doesn't answer from a single prompt. It runs multi-agent simulations to explore how policy and geopolitical shocks could ripple across markets and narratives.",
+    desc: "Phoring doesn't answer from a single prompt. It runs multi-agent simulations to explore how a scenario could actually play out across people, markets, and narratives.",
     accent: '#3d6bff',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -21,7 +21,7 @@ const POINTS = [
   {
     title: 'Not generic summaries.',
     subtitle: 'Grounded in evidence.',
-    desc: 'Every scenario traces back to documents, policy signals, market context, and web intelligence. Evidence quality directly shapes the output.',
+    desc: 'Every scenario traces back to your documents, live web signals, and simulation outcomes. Evidence quality directly shapes the forecast.',
     accent: '#22d3ee',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -56,7 +56,7 @@ const POINTS = [
   {
     title: 'Not a single perspective.',
     subtitle: 'Multi-agent, multi-model.',
-    desc: 'Optional multi-model consensus validation runs independent models to check coherence, precedent, and risk framing before adding a consensus note.',
+    desc: 'Optional multi-model consensus validation runs independent LLMs to check coherence, precedent, and completeness before adding a consensus note.',
     accent: '#e5a60a',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
