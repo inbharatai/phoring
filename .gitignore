@@ -62,3 +62,5 @@ backend/uploads/
 
 # Docker data
 data/
+# local secrets (never commit)
+.secrets-local/
