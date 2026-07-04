@@ -11,7 +11,7 @@
 [![Vue 3](https://img.shields.io/badge/Frontend-Vue_3-22c55e?style=for-the-badge&logo=vuedotjs&logoColor=white)](#architecture)
 [![OASIS](https://img.shields.io/badge/Simulation-OASIS_0.2.5-f97316?style=for-the-badge)](#simulation-engine)
 [![Zep](https://img.shields.io/badge/Memory-Zep_Cloud-8b5cf6?style=for-the-badge)](#knowledge-graph)
-[![Primary LLM](https://img.shields.io/badge/Primary_LLM-Gemini_2.5_Flash-8b5cf6?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
+[![Primary LLM](https://img.shields.io/badge/Primary_LLM-Gemini_2.5_Pro-8b5cf6?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
 [![Validator 2](https://img.shields.io/badge/Validator_2-GPT_4o_mini-10a37f?style=for-the-badge&logo=openai&logoColor=white)](#multi-ai-consensus-validation)
 [![Validator 3](https://img.shields.io/badge/Validator_3-Gemini_2.0_Flash-06b6d4?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
 [![Web Intel](https://img.shields.io/badge/Web_Intel-Serper-3b82f6?style=for-the-badge)](#web-intelligence)
@@ -77,13 +77,14 @@ end-to-end. HTTP-only fallback on the LoadBalancer VIP:
 [http://34.14.223.238](http://34.14.223.238). *(The `phoring.in` A record is
 being repointed from the GCE VM to the GKE Ingress IP `136.69.52.125`; the
 managed certificate activates within ~10–30 min of that DNS change. Until then
-`https://phoring.in` is served by the GCE VM below.)*
+`https://phoring.in` is served by the GCE VM below — both hosts run the
+identical config, so the demo is uninterrupted.)*
 
-> **Live key configuration:** the GKE primary currently has the primary LLM
-> (Gemini 2.5 Flash) + Zep Cloud configured; the consensus-validator and
-> web-intelligence (Serper/News) keys are optional and are configured on the
-> GCE secondary. Add them to the GKE `phoring-env` Secret to enable full
-> multi-AI consensus + web intelligence on GKE.
+> **Live key configuration:** both hosts run the full key set — primary LLM
+> (Google Gemini 2.5 Pro), both consensus validators (OpenAI GPT-4o-mini +
+> Google Gemini 2.0 Flash), Zep Cloud, and web intelligence (Serper + News).
+> Verified via `/health` and `/api/report/validators` (all 3 slots
+> `configured:true`).
 
 **Also running on Compute Engine:** [http://35.200.201.102](http://35.200.201.102)
 (secondary; currently serves `https://phoring.in` until the DNS repoint lands) —
@@ -105,7 +106,7 @@ flowchart LR
     ksa(("KSA phoring-telemetry<br/>Workload Identity"))
     gcs[["Cloud Storage<br/>gs://phoring-artifacts-501306<br/>uploads + reports"]]
     bq[["BigQuery<br/>phoring_telemetry<br/>runs · events · evals · feedback"]]
-    gemini{{"Gemini API<br/>2.5 Flash + 2.0 Flash"}}
+    gemini{{"Gemini API<br/>2.5 Pro + 2.0 Flash"}}
     pod --> ksa
     ksa -.ADC.-> gcs
     ksa -.ADC.-> bq
@@ -127,7 +128,7 @@ flowchart LR
 | **Artifact Registry + Cloud Build** | Builds the image from repo source and stores `phoring:latest` | `deploy/gke/deploy.sh`, `.gcloudignore` |
 | **Cloud Storage** | Mirrors uploaded documents, generated report Markdown + sections, and simulation artifacts to `gs://phoring-artifacts-501306`; report download streams from GCS when the local cache is missing | `backend/app/utils/gcp_clients.py` (`GcsService`); wired in `models/project.py`, `services/report_agent.py`, `api/report.py` |
 | **BigQuery** | Append-only telemetry — `simulation_runs`, `agent_events` (batched), `report_evaluations`, `user_feedback` in dataset `phoring_telemetry` | `backend/app/utils/gcp_clients.py` (`BigQueryLogger`); wired in `services/simulation_runner.py`, `services/report_agent.py`, `api/report.py`; schema in `deploy/gcp/bigquery_schema.sql` |
-| **Gemini API** | Primary reasoning + report generation (Gemini 2.5 Flash) and Validator-3 consensus (Gemini 2.0 Flash) via the Gemini API | `backend/app/config.py`, `backend/app/utils/llm_client.py` |
+| **Gemini API** | Primary reasoning + report generation (Gemini 2.5 Pro) and Validator-3 consensus (Gemini 2.0 Flash) via the Gemini API | `backend/app/config.py`, `backend/app/utils/llm_client.py` |
 | **Compute Engine** | Original host — `e2-standard-2` VM + 100 GB persistent disk | [`deploy/gce/`](deploy/gce) |
 
 Both BigQuery and Cloud Storage are **config-gated** (`ENABLE_BIGQUERY` /
@@ -207,7 +208,7 @@ flowchart LR
 
     subgraph CONSENSUS["CONSENSUS VALIDATION"]
         consensus(("Consensus Engine"))
-        ai1{{"Primary AI (Gemini 2.5 Flash)"}}
+        ai1{{"Primary AI (Gemini 2.5 Pro)"}}
         ai2{{"GPT-4o-mini (Validator 2)"}}
         ai3{{"Gemini (Validator 3)"}}
     end
@@ -398,7 +399,7 @@ Each section receives a confidence level (HIGH / MEDIUM / LOW) based on citation
 Up to 3 independent LLM validators score predictions on logical coherence, historical precedent, completeness, and risk factors:
 
 ```
-Primary (Gemini 2.5 Flash)  Validator 2 (GPT-4o-mini)  Validator 3 (Gemini 2.0 Flash)
+Primary (Gemini 2.5 Pro)  Validator 2 (GPT-4o-mini)  Validator 3 (Gemini 2.0 Flash)
      │                      │                        │
      └──────────────────────┴────────────────────────┘
                             ▼
@@ -457,11 +458,11 @@ cp .env.example .env
 # Edit .env with your API keys
 ```
 
-Required keys (any OpenAI SDK-compatible provider — live deploy uses Google Gemini 2.5 Flash):
+Required keys (any OpenAI SDK-compatible provider — live deploy uses Google Gemini 2.5 Pro):
 ```env
 LLM_API_KEY=your_gemini_api_key
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-LLM_MODEL_NAME=gemini-2.5-flash
+LLM_MODEL_NAME=gemini-2.5-pro
 ZEP_API_KEY=your_zep_api_key
 ```
 
@@ -551,7 +552,7 @@ All ID parameters are validated against strict regex patterns — malformed IDs 
 | **Simulation** | OASIS 0.2.5 + CAMEL-AI 0.2.78 |
 | **Knowledge Graph** | Zep Cloud 3.13.0 |
 | **Web Intelligence** | Serper API + Event Registry |
-| **LLM** | Any OpenAI SDK-compatible provider · live: Gemini 2.5 Flash (primary) + GPT-4o-mini & Gemini 2.0 Flash (consensus) |
+| **LLM** | Any OpenAI SDK-compatible provider · live: Gemini 2.5 Pro (primary) + GPT-4o-mini & Gemini 2.0 Flash (consensus) |
 | **Deployment** | Docker (multi-stage build) · Google Kubernetes Engine (Autopilot) · Google Cloud Compute Engine · Cloud Build + Artifact Registry |
 | **Data layer** | Google Cloud Storage (artifact mirror) · BigQuery (telemetry) |
 | **CI** | GitHub Actions builds & pushes Docker image to GHCR on tag push · Cloud Build → Artifact Registry for GKE |

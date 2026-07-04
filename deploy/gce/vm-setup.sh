@@ -60,10 +60,10 @@ systemctl enable --now docker
 mkdir -p /opt/phoring
 if [ ! -f /opt/phoring/.env.example ]; then
   cat > /opt/phoring/.env.example <<'ENV'
-# ===== Primary LLM (Gemini 2.5 Flash — low-latency reasoning model) =====
+# ===== Primary LLM (Gemini 2.5 Pro — strongest 2025 reasoning model) =====
 LLM_API_KEY=your_gemini_api_key_here
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-LLM_MODEL_NAME=gemini-2.5-flash
+LLM_MODEL_NAME=gemini-2.5-pro
 
 # ===== Zep Cloud (required — knowledge graph memory) =====
 ZEP_API_KEY=your_zep_api_key_here

@@ -11,7 +11,7 @@ claim below maps to a concrete file path or live resource you can inspect.
 | **Artifact Registry + Cloud Build** | Builds the image from repo source and stores it at `asia-south1-docker.pkg.dev/phoring-501306/phoring/phoring:latest` | `deploy/gke/deploy.sh` (`gcloud builds submit --tag ...`), `.gcloudignore` |
 | **Cloud Storage** | Mirrors uploaded documents, generated report Markdown + section files, and simulation artifacts to `gs://phoring-artifacts-501306`; report download streams from GCS when the local cache is missing | `backend/app/utils/gcp_clients.py` (`GcsService`), wired in `backend/app/models/project.py` (`save_file_to_project`), `backend/app/services/report_agent.py` (`save_section`, `assemble_full_report`, `save_report`), `backend/app/api/report.py` (`download_report`) |
 | **BigQuery** | Append-only telemetry: `simulation_runs`, `agent_events` (batched), `report_evaluations`, `user_feedback` in dataset `phoring_telemetry` | `backend/app/utils/gcp_clients.py` (`BigQueryLogger`), wired in `backend/app/services/simulation_runner.py` (run start/complete, agent events), `backend/app/services/report_agent.py` (consensus evaluation), `backend/app/api/report.py` (Q&A). Schema: `deploy/gcp/bigquery_schema.sql` |
-| **Gemini API** | Primary reasoning + report generation (Gemini 2.5 Flash) and Validator-3 consensus (Gemini 2.0 Flash) via `generativelanguage.googleapis.com` | `backend/app/config.py` (`LLM_BASE_URL`, `LLM_VALIDATOR_3_*`), `backend/app/utils/llm_client.py`. See README "Multi-AI Consensus Validation" |
+| **Gemini API** | Primary reasoning + report generation (Gemini 2.5 Pro) and Validator-3 consensus (Gemini 2.0 Flash) via `generativelanguage.googleapis.com` | `backend/app/config.py` (`LLM_BASE_URL`, `LLM_VALIDATOR_3_*`), `backend/app/utils/llm_client.py`. See README "Multi-AI Consensus Validation" |
 | **Compute Engine** | Original host: `e2-standard-2` VM `phoring` in `asia-south1-a` with a 100 GB persistent disk | `deploy/gce/` (`create-vm.sh`, `vm-setup.sh`, `phoring.service`, `Caddyfile`, `README.md`) |
 
 > **Honest scope note:** Gemini usage is the **Gemini API**, not Vertex AI /
@@ -38,7 +38,7 @@ claim below maps to a concrete file path or live resource you can inspect.
                        ▼                        ▼                ▼
               ┌─────────────────┐    ┌──────────────────┐  ┌──────────────┐
               │ Cloud Storage   │    │ BigQuery         │  │ Gemini API   │
-              │ gs://phoring-   │    │ phoring_telemetry│  │ 2.5 Flash +  │
+              │ gs://phoring-   │    │ phoring_telemetry│  │ 2.5 Pro +    │
               │   artifacts-    │    │  simulation_runs │  │ 2.0 Flash    │
               │   501306        │    │  agent_events    │  │ (reasoning + │
               │ uploads +       │    │  report_evals    │  │  validation) │
