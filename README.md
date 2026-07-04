@@ -19,11 +19,11 @@
 [![GKE](https://img.shields.io/badge/Hosted-GKE_Autopilot-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
 [![BigQuery](https://img.shields.io/badge/Telemetry-BigQuery-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
 [![Cloud Storage](https://img.shields.io/badge/Artifacts-Cloud_Storage-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
-[![Live](https://img.shields.io/badge/Live-GKE_34.14.223.238-10b981?style=for-the-badge)](http://34.14.223.238)
+[![Live](https://img.shields.io/badge/Live-GKE_phoring.in-10b981?style=for-the-badge)](https://phoring.in)
 
 **Upload documents. Describe a scenario. Get a simulation-backed, source-cited prediction report.**
 
-[Live Demo](http://34.14.223.238) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
+[Live Demo](https://phoring.in) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
 
 </div>
 
@@ -66,19 +66,31 @@ Documents + Scenario Objective
 
 ## Live Demo
 
-**Live (GKE): [http://34.14.223.238](http://34.14.223.238)** — the containerized
+**Live (GKE): [https://phoring.in](https://phoring.in)** — the containerized
 Phoring image running on a **GKE Autopilot** cluster (`phoring`, `asia-south1`),
 image built by Cloud Build and pulled from Artifact Registry, authenticating to
 BigQuery + Cloud Storage via **Workload Identity** (no service-account key
-file). `/health` and the landing page serve 200; BigQuery + GCS writes from the
-pod are verified end-to-end. *(canonical: https://phoring.inbharat.ai once the A
-record is pointed at the GKE Ingress IP)*
+file). Served by a GKE Ingress on a reserved global static IP (`136.69.52.125`)
+with a **Google-managed TLS certificate** for `phoring.in`; `/health` and the
+landing page serve 200, and BigQuery + GCS writes from the pod are verified
+end-to-end. HTTP-only fallback on the LoadBalancer VIP:
+[http://34.14.223.238](http://34.14.223.238). *(The `phoring.in` A record is
+being repointed from the GCE VM to the GKE Ingress IP `136.69.52.125`; the
+managed certificate activates within ~10–30 min of that DNS change. Until then
+`https://phoring.in` is served by the GCE VM below.)*
 
-**Also running on Compute Engine:** [http://35.200.201.102](http://35.200.201.102) —
+> **Live key configuration:** the GKE primary currently has the primary LLM
+> (Gemini 2.5 Flash) + Zep Cloud configured; the consensus-validator and
+> web-intelligence (Serper/News) keys are optional and are configured on the
+> GCE secondary. Add them to the GKE `phoring-env` Secret to enable full
+> multi-AI consensus + web intelligence on GKE.
+
+**Also running on Compute Engine:** [http://35.200.201.102](http://35.200.201.102)
+(secondary; currently serves `https://phoring.in` until the DNS repoint lands) —
 an `e2-standard-2` VM with a 100 GB persistent disk (mounted at
 `/app/backend/uploads`) holding uploads, reports, simulation state, and task
-files, fronted by Caddy. Upload a document, walk through the five-step pipeline,
-and get a simulation-backed forecast.
+files, fronted by Caddy with Let's Encrypt TLS. Same image, full key set
+(primary + both validators + Serper + News).
 
 ---
 
@@ -148,7 +160,7 @@ recommendation and the project's `iam.disableServiceAccountKeyCreation` policy).
 
 ## How It Works
 
-> **Interactive 3D version** of this graph available on the [live demo](http://34.14.223.238)
+> **Interactive 3D version** of this graph available on the [live demo](https://phoring.in)
 
 ```mermaid
 flowchart LR
@@ -310,7 +322,7 @@ flowchart LR
     class forecast outputNode
 ```
 
-**28 nodes · 38 edges · 8 architectural layers** — solid lines show primary data flow, dashed lines show secondary enrichment and feedback loops.
+**25 nodes · 38 edges · 9 pipeline stages** — solid lines show primary data flow, dashed lines show secondary enrichment and feedback loops.
 
 ### Five-Step Pipeline
 
@@ -601,6 +613,7 @@ backend/
       validators.py          Strict ID regex validation
       file_parser.py         PDF / MD / TXT parsing
       llm_client.py          LLM client wrapper
+      gcp_clients.py         BigQuery telemetry + Cloud Storage mirror (config-gated)
   scripts/
     run_parallel_simulation.py   OASIS parallel runner (Twitter + Reddit)
 
@@ -641,6 +654,6 @@ frontend/
 
 <div align="center">
 
-**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](http://34.14.223.238) · info@inbharat.ai
+**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](https://phoring.in) · info@inbharat.ai
 
 </div>

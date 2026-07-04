@@ -2,7 +2,7 @@
 #
 # Applies: Kubernetes ServiceAccount (Workload Identity bound to the GCP
 # phoring-telemetry SA), Deployment (one replica of the Artifact Registry image),
-# LoadBalancer Service, Google-managed TLS Ingress for phoring.inbharat.ai.
+# LoadBalancer Service, Google-managed TLS Ingress for phoring.in.
 #
 # Prereqs (see deploy/gke/README.md):
 #   - cluster `phoring` exists (deploy/gke/deploy.sh step 1)
@@ -89,7 +89,7 @@ spec:
       port: 80
       targetPort: 10000
 ---
-# ---------- Google-managed TLS certificate for phoring.inbharat.ai ----------
+# ---------- Google-managed TLS certificate for phoring.in ----------
 # Activate once the A record is pointed at the Ingress IP (see README).
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
@@ -98,7 +98,7 @@ metadata:
   namespace: default
 spec:
   domains:
-    - phoring.inbharat.ai
+    - phoring.in
 ---
 # ---------- HTTPS Ingress ----------
 apiVersion: networking.k8s.io/v1
@@ -111,7 +111,7 @@ metadata:
     kubernetes.io/ingress.global-static-ip-name: phoring-ingress-ip
 spec:
   rules:
-    - host: phoring.inbharat.ai
+    - host: phoring.in
       http:
         paths:
           - path: /

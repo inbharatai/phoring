@@ -37,15 +37,20 @@ bash create-vm.sh
 Set the host up front (drives Caddy auto-TLS):
 
 ```bash
-DOMAIN=phoring.inbharat.ai bash create-vm.sh
+DOMAIN=phoring.in bash create-vm.sh
 ```
 
 If you don't set `DOMAIN`, Caddy serves plain HTTP on `:80` until you add one.
 
+> **Note:** in the live deployment, `phoring.in` points at the **GKE** Ingress
+> (the primary). This GCE VM is the **secondary** host, reachable at its bare
+> IP `http://35.200.201.102`. If you want HTTPS on this VM too, use a different
+> host (e.g. `gce.phoring.in`) so it doesn't collide with the GKE Ingress.
+
 ## 2. Point your domain at the static IP
 
 ```
-phoring.inbharat.ai   A   <the IP printed by create-vm.sh>
+phoring.in   A   <the IP printed by create-vm.sh>
 ```
 
 Caddy provisions the Let's Encrypt certificate automatically on first request.
@@ -65,7 +70,7 @@ sudo systemctl restart phoring
 # On the VM:
 curl -s http://127.0.0.1:10000/health | head
 # From outside, once DNS is live:
-curl -s https://phoring.inbharat.ai/health
+curl -s https://phoring.in/health
 ```
 
 `/health` returns JSON; `llm_configured` / `zep_configured` should both be `true`

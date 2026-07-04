@@ -12,7 +12,8 @@ recommends Workload Identity anyway).
 - **Artifact Registry** repo `asia-south1-docker.pkg.dev/phoring-501306/phoring`
   holding `phoring:latest` (built by **Cloud Build** from the repo source).
 - A **Deployment** (1 replica) + **LoadBalancer Service** + **Google-managed
-  TLS Ingress** for `phoring.inbharat.ai`.
+  TLS Ingress** for `phoring.in` on a reserved global static IP
+  (`phoring-ingress-ip` → `136.69.52.125`).
 - **Workload Identity**: the pod's Kubernetes ServiceAccount `phoring-telemetry`
   is bound to the GCP service account
   `phoring-telemetry@phoring-501306.iam.gserviceaccount.com`, so the backend's
@@ -68,9 +69,11 @@ bash deploy/gcp/setup_gcp.sh
    curl http://$(kubectl get svc phoring -o jsonpath='{.status.loadBalancer.ingress[0].ip}')/health
    ```
 
-4. **Point DNS.** Add an A record `phoring.inbharat.ai` → Ingress IP. The
-   `ManagedCertificate` activates and `https://phoring.inbharat.ai` goes live
-   within ~10–30 minutes.
+4. **Point DNS.** Add an A record `phoring.in` → Ingress IP
+   (`136.69.52.125`, the reserved global static IP `phoring-ingress-ip`). The
+   `ManagedCertificate` activates and `https://phoring.in` goes live within
+   ~10–30 minutes of DNS propagation. Verify with
+   `kubectl get managedcertificate phoring-cert` (status → `Active`).
 
 ## Files
 
