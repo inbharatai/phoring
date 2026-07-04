@@ -71,14 +71,16 @@ Phoring image running on a **GKE Autopilot** cluster (`phoring`, `asia-south1`),
 image built by Cloud Build and pulled from Artifact Registry, authenticating to
 BigQuery + Cloud Storage via **Workload Identity** (no service-account key
 file). Served by a GKE Ingress on a reserved global static IP (`136.69.52.125`)
-with a **Google-managed TLS certificate** for `phoring.in`; `/health` and the
-landing page serve 200, and BigQuery + GCS writes from the pod are verified
-end-to-end. HTTP-only fallback on the LoadBalancer VIP:
-[http://34.14.223.238](http://34.14.223.238). *(The `phoring.in` A record is
-being repointed from the GCE VM to the GKE Ingress IP `136.69.52.125`; the
-managed certificate activates within ~10–30 min of that DNS change. Until then
-`https://phoring.in` is served by the GCE VM below — both hosts run the
-identical config, so the demo is uninterrupted.)*
+with a **Google-managed TLS certificate** for `phoring.in`; `/health`, the landing
+page, and the synchronous `/api/graph/ontology/generate` step all serve 200, and
+BigQuery + GCS writes from the pod are verified end-to-end. HTTP-only fallback on
+the LoadBalancer VIP: [http://34.14.223.238](http://34.14.223.238). *(The
+`phoring.in` A record points at the GKE Ingress IP `136.69.52.125`; the managed
+certificate is activating — `https://phoring.in` goes live within ~10–30 min of
+the DNS flip. Until the cert is `Active`, `http://phoring.in` serves the same GKE
+pod over plain HTTP.)* A `BackendConfig` raises the GCE Ingress backend timeout
+to 300s so the ~30s Gemini-2.5-Pro ontology build doesn't 502 under the default
+30s limit.
 
 > **Live key configuration:** both hosts run the full key set — primary LLM
 > (Google Gemini 2.5 Pro), both consensus validators (OpenAI GPT-4o-mini +
@@ -87,11 +89,11 @@ identical config, so the demo is uninterrupted.)*
 > `configured:true`).
 
 **Also running on Compute Engine:** [http://35.200.201.102](http://35.200.201.102)
-(secondary; currently serves `https://phoring.in` until the DNS repoint lands) —
-an `e2-standard-2` VM with a 100 GB persistent disk (mounted at
-`/app/backend/uploads`) holding uploads, reports, simulation state, and task
-files, fronted by Caddy with Let's Encrypt TLS. Same image, full key set
-(primary + both validators + Serper + News).
+(secondary / backup) — an `e2-standard-2` VM with a 100 GB persistent disk
+(mounted at `/app/backend/uploads`) holding uploads, reports, simulation state,
+and task files, fronted by Caddy with Let's Encrypt TLS. Same image, identical
+full key set (primary + both validators + Serper + News), same Gemini 2.5 Pro
+primary.
 
 ---
 

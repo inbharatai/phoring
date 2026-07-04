@@ -79,9 +79,16 @@ bash deploy/gcp/setup_gcp.sh
 
 | File | Purpose |
 |---|---|
-| `manifests.yaml` | KSA (Workload Identity), Deployment, Service, Ingress, ManagedCertificate, HPA |
+| `manifests.yaml` | KSA (Workload Identity), Deployment, Service, **BackendConfig** (300s LB timeout), Ingress, ManagedCertificate, HPA |
 | `deploy.sh` | End-to-end: build → cluster → kubectl → apply |
 | `create-secret.sh` | Create the `phoring-env` Secret from a `.env` file |
+
+> **BackendConfig (300s timeout):** the GCE HTTP(S) Load Balancer used by the
+> GKE Ingress defaults to a 30-second backend timeout, which 502s the
+> synchronous `/api/graph/ontology/generate` step (Gemini 2.5 Pro, ~33s).
+> `manifests.yaml` ships a `BackendConfig` (`timeoutSec: 300`) linked to the
+> Service via `cloud.google.com/backend-config` so the ontology build completes
+> through the Ingress.
 
 ## Telemetry + artifacts
 
