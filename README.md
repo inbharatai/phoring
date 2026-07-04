@@ -75,10 +75,9 @@ with a **Google-managed TLS certificate** for `phoring.in`; `/health`, the landi
 page, and the synchronous `/api/graph/ontology/generate` step all serve 200, and
 BigQuery + GCS writes from the pod are verified end-to-end. HTTP-only fallback on
 the LoadBalancer VIP: [http://34.14.223.238](http://34.14.223.238). *(The
-`phoring.in` A record points at the GKE Ingress IP `136.69.52.125`; the managed
-certificate is activating — `https://phoring.in` goes live within ~10–30 min of
-the DNS flip. Until the cert is `Active`, `http://phoring.in` serves the same GKE
-pod over plain HTTP.)* A `BackendConfig` raises the GCE Ingress backend timeout
+`phoring.in` A record points at the GKE Ingress IP `136.69.52.125`; the
+Google-managed TLS certificate is **Active** — `https://phoring.in` is live with
+HTTP→HTTPS redirect.)* A `BackendConfig` raises the GCE Ingress backend timeout
 to 300s so the ~30s Gemini-2.5-Pro ontology build doesn't 502 under the default
 30s limit.
 
