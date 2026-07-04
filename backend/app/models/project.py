@@ -15,6 +15,7 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 from dataclasses import dataclass, field, asdict
 from..config import Config
+from..utils.gcp_clients import gcs_service
 
 
 class ProjectStatus(str, Enum):
@@ -308,6 +309,15 @@ class ProjectManager:
         file_storage.save(file_path)
 
         file_size = os.path.getsize(file_path)
+
+        # Cloud Storage mirror (no-op when ENABLE_GCS is false).
+        try:
+            gcs_service.upload(
+                file_path,
+                f"{Config.GCS_UPLOAD_PREFIX}projects/{project_id}/files/{safe_filename}"
+            )
+        except Exception:
+            pass
 
         return {
             "original_filename": original_filename,

@@ -57,6 +57,21 @@ class Config:
     # ===== Geopolitical Event Injection =====
     ENABLE_GEOPOLITICAL_EVENTS = os.environ.get('ENABLE_GEOPOLITICAL_EVENTS', 'true').strip().lower() == 'true'
 
+    # ===== Google Cloud integrations (optional, default off) =====
+    # BigQuery telemetry + Cloud Storage artifact mirror. Both are config-gated
+    # and degrade to no-ops when unset — see backend/app/utils/gcp_clients.py.
+    GCP_PROJECT_ID = os.environ.get('GCP_PROJECT_ID', '')
+    ENABLE_GCS = os.environ.get('ENABLE_GCS', 'false').strip().lower() == 'true'
+    GCS_BUCKET = os.environ.get('GCS_BUCKET', '')
+    GCS_UPLOAD_PREFIX = os.environ.get('GCS_UPLOAD_PREFIX', 'uploads/')
+    GCS_REPORTS_PREFIX = os.environ.get('GCS_REPORTS_PREFIX', 'reports/')
+    ENABLE_BIGQUERY = os.environ.get('ENABLE_BIGQUERY', 'false').strip().lower() == 'true'
+    BIGQUERY_DATASET = os.environ.get('BIGQUERY_DATASET', '')
+    BIGQUERY_RUNS_TABLE = os.environ.get('BIGQUERY_RUNS_TABLE', 'simulation_runs')
+    BIGQUERY_EVENTS_TABLE = os.environ.get('BIGQUERY_EVENTS_TABLE', 'agent_events')
+    BIGQUERY_EVALUATIONS_TABLE = os.environ.get('BIGQUERY_EVALUATIONS_TABLE', 'report_evaluations')
+    BIGQUERY_FEEDBACK_TABLE = os.environ.get('BIGQUERY_FEEDBACK_TABLE', 'user_feedback')
+
     # file upload config
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024 # 50MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')

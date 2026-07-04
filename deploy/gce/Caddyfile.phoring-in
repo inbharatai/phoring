@@ -1,0 +1,17 @@
+# Phoring — Caddy reverse proxy
+# :80 catch-all keeps the raw IP (http://35.200.201.102) working.
+# phoring.in + www auto-provision a Let's Encrypt TLS cert once DNS resolves.
+
+:80 {
+    encode gzip zstd
+    reverse_proxy 127.0.0.1:10000 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+phoring.in, www.phoring.in {
+    encode gzip zstd
+    reverse_proxy 127.0.0.1:10000 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

@@ -19,6 +19,7 @@ from enum import Enum
 
 from..config import Config
 from..utils.logger import get_logger
+from..utils.gcp_clients import bigquery_logger
 from.zep_graph_memory_updater import ZepGraphMemoryManager
 from.simulation_ipc import SimulationIPCClient
 
@@ -600,6 +601,12 @@ class SimulationRunner:
             state.runner_status = RunnerStatus.RUNNING
             cls._processes[simulation_id] = process
             cls._save_run_state(state)
+
+            # BigQuery telemetry: emit a run-start row.
+            try:
+                bigquery_logger.log_run_start(state)
+            except Exception as bq_err:
+                logger.warning(f"BigQuery log_run_start failed (non-fatal): {bq_err}")
             
             # Start monitoring thread
             monitor_thread = threading.Thread(
@@ -735,6 +742,12 @@ class SimulationRunner:
             state.twitter_running = False
             state.reddit_running = False
             cls._save_run_state(state)
+
+            # BigQuery telemetry: emit a run-complete row + flush buffered events.
+            try:
+                bigquery_logger.log_run_complete(state)
+            except Exception as bq_err:
+                logger.warning(f"BigQuery log_run_complete failed (non-fatal): {bq_err}")
             
         except Exception as e:
             logger.error(f"Monitor thread error: {simulation_id}, error={str(e)}")
@@ -867,7 +880,13 @@ class SimulationRunner:
                                 success=action_data.get("success", True),
                             )
                             state.add_action(action)
-                            
+
+                            # BigQuery telemetry: buffer an agent_events row.
+                            try:
+                                bigquery_logger.log_agent_event(state.simulation_id, action)
+                            except Exception as bq_err:
+                                logger.debug(f"BigQuery log_agent_event failed (non-fatal): {bq_err}")
+
                             # Update current round
                             if action.round_num and action.round_num > state.current_round:
                                 state.current_round = action.round_num

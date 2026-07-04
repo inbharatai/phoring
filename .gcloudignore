@@ -1,0 +1,39 @@
+# gcloud builds submit source-upload ignore list.
+# Keep the upload lean — exclude build artifacts + deps + local state.
+.gcloudignore
+.git
+.github
+.cursor
+.claude
+.DS_Store
+.env
+.env.*
+
+# Node deps + build output (rebuilt inside the Docker image)
+node_modules
+**/node_modules
+frontend/dist
+frontend/.vite
+landing/.next
+landing/out
+landing/dist
+
+# Python local state
+__pycache__
+**/__pycache__
+*.pyc
+.venv
+backend/.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Runtime data + logs
+backend/uploads
+backend/logs
+*.log
+data/
+
+# Local secrets
+.secrets-local
+deploy/gcp/*-key.json

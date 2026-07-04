@@ -64,3 +64,15 @@ backend/uploads/
 data/
 # local secrets (never commit)
 .secrets-local/
+
+# Google Cloud service-account keys (never commit)
+deploy/gcp/*-key.json
+deploy/gcp/*.key.json
+deploy/gke/*-key.json
+deploy/gke/*.key.json
+
+# GKE/GCE real env files (templates use .example suffix and ARE committed)
+deploy/gke/.env
+deploy/gke/.env.gke
+deploy/gce/.env
+deploy/gce/.env.gce

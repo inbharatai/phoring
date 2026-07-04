@@ -16,6 +16,7 @@ from..models.task import TaskManager, TaskStatus
 from..utils.logger import get_logger
 from..utils.validators import Validators, ValidationError
 from..utils.llm_client import get_available_validators
+from..utils.gcp_clients import bigquery_logger, gcs_service
 
 logger = get_logger('phoring.api.report')
 
@@ -400,6 +401,31 @@ def download_report(report_id: str):
         md_path = ReportManager._get_report_markdown_path(report_id)
 
         if not os.path.exists(md_path):
+            # Cloud Storage fallback: stream from GCS when the local cache
+            # is missing (no-op when ENABLE_GCS is false / object absent).
+            gcs_temp = None
+            try:
+                gcs_temp = gcs_service.download_to_temp(
+                    f"{Config.GCS_REPORTS_PREFIX}{report_id}/full_report.md"
+                )
+            except Exception as gcs_err:
+                logger.warning(f"GCS download fallback failed: {gcs_err}")
+
+            if gcs_temp and os.path.exists(gcs_temp):
+                response = send_file(
+                    gcs_temp,
+                    as_attachment=True,
+                    download_name=f"{report_id}.md"
+                )
+                @response.call_on_close
+                def _cleanup_gcs():
+                    try:
+                        os.unlink(gcs_temp)
+                    except OSError:
+                        pass
+                return response
+
+            # Final fallback: synthesize from in-memory markdown_content.
             import tempfile
             fd, temp_path = tempfile.mkstemp(suffix='.md')
             try:
@@ -547,6 +573,19 @@ def chat_with_report_agent():
         )
 
         result = agent.chat(message=message, chat_history=chat_history)
+
+        # BigQuery telemetry: log the Q&A exchange as user_feedback.
+        try:
+            report_obj = ReportManager.get_report_by_simulation(simulation_id)
+            bigquery_logger.log_user_feedback(
+                getattr(report_obj, "report_id", None) if report_obj else None,
+                simulation_id,
+                message,
+                result.get("response", "") if isinstance(result, dict) else "",
+                len(result.get("tool_calls", [])) if isinstance(result, dict) else 0,
+            )
+        except Exception as bq_err:
+            logger.warning(f"BigQuery log_user_feedback failed (non-fatal): {bq_err}")
 
         return jsonify({
             "success": True,

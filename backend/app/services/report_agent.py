@@ -15,6 +15,7 @@ from enum import Enum
 from..config import Config
 from..utils.llm_client import LLMClient
 from..utils.logger import get_logger
+from..utils.gcp_clients import bigquery_logger, gcs_service
 from.zep_tools import ZepToolsService
 
 logger = get_logger('phoring.report_agent')
@@ -2104,6 +2105,14 @@ class ReportAgent:
                             f"Consensus validation complete: {validation_result.overall_consensus} "
                             f"({validation_result.validators_used} validators)"
                         )
+                        # BigQuery telemetry: log the report evaluation row.
+                        try:
+                            bigquery_logger.log_report_evaluation(
+                                report_id, getattr(self, "simulation_id", None),
+                                validation_result
+                            )
+                        except Exception as bq_err:
+                            logger.warning(f"BigQuery log_report_evaluation failed (non-fatal): {bq_err}")
                     else:
                         logger.info("Consensus validation skipped: selected validators not available")
                 except Exception as e:
@@ -2460,6 +2469,15 @@ class ReportManager:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(md_content)
 
+        # Cloud Storage mirror (no-op when ENABLE_GCS is false).
+        try:
+            gcs_service.upload(
+                file_path,
+                f"{Config.GCS_REPORTS_PREFIX}{report_id}/{file_suffix}"
+            )
+        except Exception:
+            pass
+
         logger.info(f"Section saved: {report_id}/{file_suffix}")
         return file_path
     
@@ -2603,7 +2621,16 @@ class ReportManager:
         full_path = cls._get_report_markdown_path(report_id)
         with open(full_path, 'w', encoding='utf-8') as f:
             f.write(md_content)
-        
+
+        # Cloud Storage mirror (no-op when ENABLE_GCS is false).
+        try:
+            gcs_service.upload(
+                full_path,
+                f"{Config.GCS_REPORTS_PREFIX}{report_id}/full_report.md"
+            )
+        except Exception:
+            pass
+
         logger.info(f"Full report assembled: {report_id}")
         return md_content
     
@@ -2735,9 +2762,18 @@ class ReportManager:
         
         # Save full markdown report if present.
         if report.markdown_content:
-            with open(cls._get_report_markdown_path(report.report_id), 'w', encoding='utf-8') as f:
+            full_md_path = cls._get_report_markdown_path(report.report_id)
+            with open(full_md_path, 'w', encoding='utf-8') as f:
                 f.write(report.markdown_content)
-        
+            # Cloud Storage mirror (no-op when ENABLE_GCS is false).
+            try:
+                gcs_service.upload(
+                    full_md_path,
+                    f"{Config.GCS_REPORTS_PREFIX}{report.report_id}/full_report.md"
+                )
+            except Exception:
+                pass
+
         logger.info(f"Report saved: {report.report_id}")
     
     @classmethod

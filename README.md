@@ -16,11 +16,14 @@
 [![Validator 3](https://img.shields.io/badge/Validator_3-Gemini_2.0_Flash-06b6d4?style=for-the-badge&logo=google&logoColor=white)](#multi-ai-consensus-validation)
 [![Web Intel](https://img.shields.io/badge/Web_Intel-Serper-3b82f6?style=for-the-badge)](#web-intelligence)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)](#quick-start)
-[![Live](https://img.shields.io/badge/Live-GCE_35.200.201.102-10b981?style=for-the-badge)](http://35.200.201.102)
+[![GKE](https://img.shields.io/badge/Hosted-GKE_Autopilot-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
+[![BigQuery](https://img.shields.io/badge/Telemetry-BigQuery-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
+[![Cloud Storage](https://img.shields.io/badge/Artifacts-Cloud_Storage-4285f4?style=for-the-badge&logo=googlecloud&logoColor=white)](#google-cloud-usage)
+[![Live](https://img.shields.io/badge/Live-GKE_34.14.223.238-10b981?style=for-the-badge)](http://34.14.223.238)
 
 **Upload documents. Describe a scenario. Get a simulation-backed, source-cited prediction report.**
 
-[Live Demo](http://35.200.201.102) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
+[Live Demo](http://34.14.223.238) · [Quick Start](#quick-start) · [How It Works](#how-it-works) · [API Reference](#api-surface) · [Roadmap](#roadmap)
 
 </div>
 
@@ -63,13 +66,70 @@ Documents + Scenario Objective
 
 ## Live Demo
 
-**Live: [http://35.200.201.102](http://35.200.201.102)**  *(canonical: https://phoring.inbharat.ai once the A record is pointed at `35.200.201.102`)*
+**Live (GKE): [http://34.14.223.238](http://34.14.223.238)** — the containerized
+Phoring image running on a **GKE Autopilot** cluster (`phoring`, `asia-south1`),
+image built by Cloud Build and pulled from Artifact Registry, authenticating to
+BigQuery + Cloud Storage via **Workload Identity** (no service-account key
+file). `/health` and the landing page serve 200; BigQuery + GCS writes from the
+pod are verified end-to-end. *(canonical: https://phoring.inbharat.ai once the A
+record is pointed at the GKE Ingress IP)*
 
-Deployed on Google Cloud Compute Engine — a Dockerized full-stack image on an
-`e2-standard-2` VM with a 100 GB persistent disk (mounted at
+**Also running on Compute Engine:** [http://35.200.201.102](http://35.200.201.102) —
+an `e2-standard-2` VM with a 100 GB persistent disk (mounted at
 `/app/backend/uploads`) holding uploads, reports, simulation state, and task
-files. Upload a document, walk through the five-step pipeline, and get a
-simulation-backed forecast. No local setup required.
+files, fronted by Caddy. Upload a document, walk through the five-step pipeline,
+and get a simulation-backed forecast.
+
+---
+
+## Google Cloud Usage
+
+Phoring runs on Google Cloud across the data and application layer. Full
+wiring details: [`docs/google-cloud-architecture.md`](docs/google-cloud-architecture.md).
+
+```mermaid
+flowchart LR
+    pod["GKE Pod<br/>(AR image: phoring:latest)"]
+    ksa(("KSA phoring-telemetry<br/>Workload Identity"))
+    gcs[["Cloud Storage<br/>gs://phoring-artifacts-501306<br/>uploads + reports"]]
+    bq[["BigQuery<br/>phoring_telemetry<br/>runs · events · evals · feedback"]]
+    gemini{{"Gemini API<br/>2.5 Flash + 2.0 Flash"}}
+    pod --> ksa
+    ksa -.ADC.-> gcs
+    ksa -.ADC.-> bq
+    pod -->|reasoning + validation| gemini
+    pod -->|mirror writes| gcs
+    pod -->|telemetry rows| bq
+    classDef gke fill:#4285f4,stroke:#2a56c6,color:#fff
+    classDef data fill:#0f9d58,stroke:#0b7a44,color:#fff
+    classDef ai fill:#ea4335,stroke:#c13328,color:#fff
+    class pod,gke gke
+    class ksa gke
+    class gcs,bq data
+    class gemini ai
+```
+
+| Service | What it does in Phoring | Where it's wired |
+|---|---|---|
+| **Google Kubernetes Engine** | Hosts the containerized frontend + backend as an Autopilot cluster (`phoring`, `asia-south1`) | [`deploy/gke/`](deploy/gke) — `manifests.yaml`, `deploy.sh`, `README.md` |
+| **Artifact Registry + Cloud Build** | Builds the image from repo source and stores `phoring:latest` | `deploy/gke/deploy.sh`, `.gcloudignore` |
+| **Cloud Storage** | Mirrors uploaded documents, generated report Markdown + sections, and simulation artifacts to `gs://phoring-artifacts-501306`; report download streams from GCS when the local cache is missing | `backend/app/utils/gcp_clients.py` (`GcsService`); wired in `models/project.py`, `services/report_agent.py`, `api/report.py` |
+| **BigQuery** | Append-only telemetry — `simulation_runs`, `agent_events` (batched), `report_evaluations`, `user_feedback` in dataset `phoring_telemetry` | `backend/app/utils/gcp_clients.py` (`BigQueryLogger`); wired in `services/simulation_runner.py`, `services/report_agent.py`, `api/report.py`; schema in `deploy/gcp/bigquery_schema.sql` |
+| **Gemini API** | Primary reasoning + report generation (Gemini 2.5 Flash) and Validator-3 consensus (Gemini 2.0 Flash) via the Gemini API | `backend/app/config.py`, `backend/app/utils/llm_client.py` |
+| **Compute Engine** | Original host — `e2-standard-2` VM + 100 GB persistent disk | [`deploy/gce/`](deploy/gce) |
+
+Both BigQuery and Cloud Storage are **config-gated** (`ENABLE_BIGQUERY` /
+`ENABLE_GCS`, default off) and degrade to no-ops that **never** raise — the
+pipeline is unaffected when they're unconfigured. One-shot resource setup:
+`bash deploy/gcp/setup_gcp.sh` (creates the bucket, dataset, tables, and a
+Workload-Identity-bound service account — no JSON keys, per Google
+recommendation and the project's `iam.disableServiceAccountKeyCreation` policy).
+
+> **Honest scope:** Gemini usage is the **Gemini API** (not Vertex AI / Gemini
+> Enterprise Agent Platform). BigQuery is **append-only telemetry**, not a BI
+> layer (Looker and Managed Service for Apache Spark are not used). Local disk
+> is the primary working store; Cloud Storage is the durable mirror + download
+> fallback.
 
 ---
 
@@ -88,7 +148,7 @@ simulation-backed forecast. No local setup required.
 
 ## How It Works
 
-> **Interactive 3D version** of this graph available on the [live demo](http://35.200.201.102)
+> **Interactive 3D version** of this graph available on the [live demo](http://34.14.223.238)
 
 ```mermaid
 flowchart LR
@@ -430,8 +490,9 @@ docker compose up -d
 # → http://localhost:5001 (backend)
 ```
 
-> **Google Cloud deployment (production):** see [`deploy/gce/README.md`](deploy/gce/README.md) —
-> a one-command Compute Engine setup (e2-standard-2 VM + 100 GB persistent disk + Caddy HTTPS).
+> **Google Cloud deployment (production):**
+> - **GKE Autopilot (primary):** [`deploy/gke/README.md`](deploy/gke/README.md) — Cloud Build → Artifact Registry → GKE with Workload Identity.
+> - **Compute Engine (secondary):** [`deploy/gce/README.md`](deploy/gce/README.md) — one-command VM + 100 GB persistent disk + Caddy HTTPS.
 
 ### 5. Verify
 
@@ -479,8 +540,9 @@ All ID parameters are validated against strict regex patterns — malformed IDs 
 | **Knowledge Graph** | Zep Cloud 3.13.0 |
 | **Web Intelligence** | Serper API + Event Registry |
 | **LLM** | Any OpenAI SDK-compatible provider · live: Gemini 2.5 Flash (primary) + GPT-4o-mini & Gemini 2.0 Flash (consensus) |
-| **Deployment** | Docker (multi-stage build) · Google Cloud Compute Engine |
-| **CI** | GitHub Actions builds & pushes Docker image to GHCR on tag push |
+| **Deployment** | Docker (multi-stage build) · Google Kubernetes Engine (Autopilot) · Google Cloud Compute Engine · Cloud Build + Artifact Registry |
+| **Data layer** | Google Cloud Storage (artifact mirror) · BigQuery (telemetry) |
+| **CI** | GitHub Actions builds & pushes Docker image to GHCR on tag push · Cloud Build → Artifact Registry for GKE |
 
 ---
 
@@ -490,20 +552,23 @@ Phoring is actively developed. Current limitations:
 
 | Area | State |
 |---|---|
-| **Storage** | File-based JSON — no database backend yet |
+| **Storage** | Local filesystem (primary) mirrored to Google Cloud Storage; no relational DB backend |
+| **Telemetry** | BigQuery append-only logging of runs, agent events, report evaluations, and Q&A (config-gated) |
 | **Authentication** | None — suitable for local or trusted-network use |
 | **Social content** | Via Google Search indexing, not direct platform APIs |
-| **Scalability** | Single-process Flask; not designed for high-concurrency |
+| **Scalability** | GKE-hosted (Autopilot, HPA-scaled); Flask is single-process per pod |
 
 ---
 
 ## Roadmap
 
-- [ ] Persistent database backend (replace JSON file storage)
+- [x] Stage-level observability and runtime telemetry → BigQuery (`simulation_runs`, `agent_events`)
+- [x] Durable artifact storage → Cloud Storage mirror of uploads + reports
+- [x] Containerized hosting on managed Kubernetes → GKE Autopilot
+- [ ] Persistent relational database backend (replace JSON file storage)
 - [ ] Authentication and authorization layer
 - [ ] Objective benchmark suite for simulation quality scoring
-- [ ] Stage-level observability and richer runtime telemetry
-- [ ] Replay and post-run analysis interface
+- [ ] Replay and post-run analysis interface (over BigQuery telemetry)
 - [ ] Plugin system for custom intelligence sources
 - [ ] Real-time collaborative sessions
 
@@ -576,6 +641,6 @@ frontend/
 
 <div align="center">
 
-**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](http://35.200.201.102) · info@inbharat.ai
+**Built by [Reeturaj Goswami](https://github.com/inbharatai)** · [Live Demo](http://34.14.223.238) · info@inbharat.ai
 
 </div>

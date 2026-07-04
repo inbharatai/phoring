@@ -38,3 +38,9 @@ requests>=2.31.0
 
 # Data validation
 pydantic>=2.0.0
+
+# ============= Google Cloud (optional, config-gated) =============
+# BigQuery telemetry logging + Cloud Storage artifact mirror.
+# Runtime import is lazy; the app degrades to no-ops if these are absent.
+google-cloud-bigquery>=3.0.0
+google-cloud-storage>=2.10.0

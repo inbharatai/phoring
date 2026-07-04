@@ -1,0 +1,144 @@
+# Phoring — GKE Autopilot deployment manifests.
+#
+# Applies: Kubernetes ServiceAccount (Workload Identity bound to the GCP
+# phoring-telemetry SA), Deployment (one replica of the Artifact Registry image),
+# LoadBalancer Service, Google-managed TLS Ingress for phoring.inbharat.ai.
+#
+# Prereqs (see deploy/gke/README.md):
+#   - cluster `phoring` exists (deploy/gke/deploy.sh step 1)
+#   - kubectl is pointed at it (deploy/gke/deploy.sh wires gcloud kubectl)
+#   - Secret `phoring-env` created from your .env: deploy/gke/create-secret.sh
+#
+# Image: asia-south1-docker.pkg.dev/phoring-501306/phoring/phoring:latest
+
+# ---------- Kubernetes ServiceAccount bound to the GCP telemetry SA ----------
+# Workload Identity: pods using this KSA authenticate as
+# phoring-telemetry@phoring-501306.iam.gserviceaccount.com with no key file.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: phoring-telemetry
+  namespace: default
+  annotations:
+    iam.gke.io/gcp-service-account: phoring-telemetry@phoring-501306.iam.gserviceaccount.com
+---
+# ---------- Phoring Deployment ----------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoring
+  namespace: default
+  labels:
+    app: phoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phoring
+  template:
+    metadata:
+      labels:
+        app: phoring
+    spec:
+      serviceAccountName: phoring-telemetry
+      containers:
+        - name: phoring
+          image: asia-south1-docker.pkg.dev/phoring-501306/phoring/phoring:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 10000
+              name: http
+          envFrom:
+            - secretRef:
+                name: phoring-env
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 10000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+---
+# ---------- LoadBalancer Service ----------
+apiVersion: v1
+kind: Service
+metadata:
+  name: phoring
+  namespace: default
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  type: LoadBalancer
+  selector:
+    app: phoring
+  ports:
+    - name: http
+      port: 80
+      targetPort: 10000
+---
+# ---------- Google-managed TLS certificate for phoring.inbharat.ai ----------
+# Activate once the A record is pointed at the Ingress IP (see README).
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: phoring-cert
+  namespace: default
+spec:
+  domains:
+    - phoring.inbharat.ai
+---
+# ---------- HTTPS Ingress ----------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoring
+  namespace: default
+  annotations:
+    networking.gke.io/managed-certificates: phoring-cert
+    kubernetes.io/ingress.global-static-ip-name: phoring-ingress-ip
+spec:
+  rules:
+    - host: phoring.inbharat.ai
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: phoring
+                port:
+                  number: 80
+---
+# ---------- (Optional) HorizontalPodAutoscaler ----------
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: phoring
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: phoring
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
