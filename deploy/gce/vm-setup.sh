@@ -78,7 +78,7 @@ LLM_VALIDATOR_2_BASE_URL=https://api.openai.com/v1
 LLM_VALIDATOR_2_MODEL_NAME=gpt-4o-mini
 LLM_VALIDATOR_3_API_KEY=
 LLM_VALIDATOR_3_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-LLM_VALIDATOR_3_MODEL_NAME=gemini-2.0-flash
+LLM_VALIDATOR_3_MODEL_NAME=gemini-2.5-flash
 
 # ===== Runtime (do NOT change PORT — container + Caddy expect 10000) =====
 PORT=10000
