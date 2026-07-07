@@ -2,11 +2,13 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { ScrollReveal } from './ScrollReveal'
+import { useReducedMotion } from 'motion/react'
 
 function SignalCanvas({ r, g, b }: { r: number; g: number; b: number }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>(0)
   const [mounted, setMounted] = useState(false)
+  const reduce = useReducedMotion()
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -29,6 +31,29 @@ function SignalCanvas({ r, g, b }: { r: number; g: number; b: number }) {
         phase: Math.random() * Math.PI * 2,
         speed: 0.02 + Math.random() * 0.02,
       })
+    }
+
+    // Reduced motion: render one static frame and stop.
+    if (reduce) {
+      ctx.clearRect(0, 0, 120, 80)
+      ctx.beginPath()
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i]
+        const y = 40 + Math.sin(p.phase) * 18
+        if (i === 0) ctx.moveTo(p.x, y)
+        else ctx.lineTo(p.x, y)
+      }
+      ctx.strokeStyle = `rgba(${r},${g},${b},0.15)`
+      ctx.lineWidth = 1
+      ctx.stroke()
+      for (const p of points) {
+        const y = 40 + Math.sin(p.phase) * 18
+        ctx.beginPath()
+        ctx.arc(p.x, y, 2.5, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},0.5)`
+        ctx.fill()
+      }
+      return
     }
 
     const animate = () => {
@@ -61,7 +86,7 @@ function SignalCanvas({ r, g, b }: { r: number; g: number; b: number }) {
     }
     animRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(animRef.current)
-  }, [mounted, r, g, b])
+  }, [mounted, r, g, b, reduce])
 
   if (!mounted) return <div className="w-[120px] h-[80px]" />
   return <canvas ref={ref} className="w-[120px] h-[80px]" aria-hidden="true" />
@@ -72,21 +97,21 @@ const CAPABILITIES = [
     tag: 'SIGNAL',
     title: 'Signal Ingestion',
     description:
-      'Ingests your documents plus live web sources, extracts entities and relationships, and builds a traceable knowledge graph for the scenario you want to predict.',
+      'Ingests PDF, Markdown and text sources, generates a scenario-specific ontology, extracts entities and relationships, enriches them with current web intelligence and stores the resulting evidence graph in Zep.',
     r: 61, g: 107, b: 255,
   },
   {
-    tag: 'MODEL',
-    title: 'Scenario Simulation',
+    tag: 'SIMULATION',
+    title: 'Social Simulation',
     description:
-      'Deploys agent personas into synthetic environments to test how a scenario could actually play out — how people react, how narratives shift, how decisions propagate.',
+      'Converts graph entities into behaviourally aligned agents and runs Twitter and Reddit environments in parallel through OASIS, tracking actions, reactions and narrative movement round by round.',
     r: 34, g: 211, b: 238,
   },
   {
-    tag: 'OUTPUT',
-    title: 'Source-Cited Forecasts',
+    tag: 'REPORT',
+    title: 'Decision Intelligence',
     description:
-      'Generates source-cited forecasts with confidence-scored reports. Every claim traces back to documents, live web sources, and simulation outcomes.',
+      'A tool-using Report Agent combines graph evidence, live intelligence, simulated behaviour and selected agent interviews to produce an evidence-linked forecast with confidence scoring, validation and follow-up Q&A.',
     r: 16, g: 185, b: 129,
   },
 ]

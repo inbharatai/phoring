@@ -21,7 +21,7 @@ const POINTS = [
   {
     title: 'Not generic summaries.',
     subtitle: 'Grounded in evidence.',
-    desc: 'Every scenario traces back to your documents, live web signals, and simulation outcomes. Evidence quality directly shapes the forecast.',
+    desc: 'Scenarios are grounded in uploaded documents, live web intelligence and simulation outcomes. Evidence quality directly shapes the forecast.',
     accent: '#22d3ee',
     icon: (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -67,6 +67,19 @@ const POINTS = [
         <path d="M18 10.5L22 19.5" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
         <path d="M11 22H21" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
         <path d="M16 14v2M8 17v2M24 17v2" stroke="currentColor" strokeWidth="0.6" opacity="0.25" strokeDasharray="1 2" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Not a fragile one-shot demo.',
+    subtitle: 'A resilient simulation runtime.',
+    desc: 'Saved run parameters, isolated processes, adaptive stall handling and restart recovery protect longer simulations from interruption — with normal, fast or express speed modes.',
+    accent: '#10b981',
+    icon: (
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M7 16a9 9 0 1 1 6 8.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+        <path d="M7 16l-2.5-2.5M7 16l2.5-2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="22" cy="11" r="1.6" fill="currentColor" />
       </svg>
     ),
   },

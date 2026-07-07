@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect } from 'react'
+import { useReducedMotion } from 'motion/react'
 
 /* ──────────────────────────────────────────────────────────────
    PipelineViz — Canvas-rendered animated flow visualization
@@ -44,6 +45,7 @@ const STAGES: StageHub[] = [
 export function PipelineViz() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>(0)
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -66,6 +68,42 @@ export function PipelineViz() {
     }
     resize()
     window.addEventListener('resize', resize)
+
+    // Reduced motion: draw one static frame (paths + hubs + labels), no particles.
+    if (reduce) {
+      ctx.clearRect(0, 0, w, h)
+      for (let i = 0; i < STAGES.length - 1; i++) {
+        const a = STAGES[i], b = STAGES[i + 1]
+        ctx.beginPath()
+        ctx.moveTo(a.x * w + a.r, a.y * h)
+        ctx.lineTo(b.x * w - b.r, b.y * h)
+        ctx.strokeStyle = `rgba(${b.color[0]},${b.color[1]},${b.color[2]},0.08)`
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
+      for (const s of STAGES) {
+        const sx = s.x * w, sy = s.y * h
+        const [r, g, b] = s.color
+        ctx.beginPath()
+        ctx.arc(sx, sy, s.r, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(${r},${g},${b},0.3)`
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(sx, sy, s.r - 1, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},0.05)`
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(sx, sy, 3, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},0.6)`
+        ctx.fill()
+        ctx.font = `600 ${Math.max(8, Math.min(10, w * 0.012))}px var(--font-mono)`
+        ctx.textAlign = 'center'
+        ctx.fillStyle = `rgba(${r},${g},${b},0.5)`
+        ctx.fillText(s.label, sx, sy + s.r + 18)
+      }
+      return () => window.removeEventListener('resize', resize)
+    }
 
     const animate = (time: number) => {
       ctx.clearRect(0, 0, w, h)
@@ -215,7 +253,7 @@ export function PipelineViz() {
       cancelAnimationFrame(animRef.current)
       window.removeEventListener('resize', resize)
     }
-  }, [])
+  }, [reduce])
 
   return (
     <canvas

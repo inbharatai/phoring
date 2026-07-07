@@ -8,52 +8,76 @@ const METHODOLOGY = [
     num: '01',
     accent: '#3d6bff',
     detail:
-      'LLM-driven ontology extraction → entity and relationship mapping → Zep Cloud storage → downstream querying for agent profiles, simulation context, and report generation.',
+      'LLM-driven ontology generation extracts entities, relationships and domain structure before storing a queryable scenario graph in Zep.',
   },
   {
-    label: 'WEB ENRICHMENT',
+    label: 'WEB INTELLIGENCE',
     num: '02',
     accent: '#22d3ee',
     detail:
-      'Entity-scoped queries via Serper and NewsAPI. Articles scraped and processed up to 4,000 characters each. Social content sourced via Google Search indexing.',
+      'Serper and Event Registry provide current web and news context. Public social signals are retrieved through search indexing rather than direct platform APIs.',
   },
   {
-    label: 'SIMULATION ENGINE',
+    label: 'BEHAVIOURAL AGENTS',
     num: '03',
     accent: '#e5a60a',
     detail:
-      'OASIS framework spawns synthetic environments where LLM-generated agents interact based on assigned personas, stances, and behavioral parameters. Results stream in real time.',
+      'Scenario entities are converted into simulated stakeholders with roles, stances, interests, influence levels and behavioural parameters.',
   },
   {
-    label: 'REPORT GENERATION',
+    label: 'PARALLEL SIMULATION',
     num: '04',
     accent: '#10b981',
     detail:
-      'ReACT loop pulls from knowledge graph, web intelligence, and simulation data. Claims are backed by inline numbered references with a full sources section.',
+      'OASIS runs synthetic Twitter and Reddit environments concurrently and records platform-specific agent activity, reactions and narrative movement.',
   },
   {
-    label: 'CONFIDENCE SCORING',
+    label: 'AGENTIC INVESTIGATION',
     num: '05',
     accent: '#3d6bff',
     detail:
-      'Each report section tagged [HIGH], [MEDIUM], or [LOW] based on independent tool-sourced data points. Reflects evidence density — not a guarantee of accuracy.',
+      'The Report Agent iteratively searches graph evidence, simulation data and live context rather than relying on one generation call.',
   },
   {
-    label: 'CONSENSUS VALIDATION',
+    label: 'AGENT INTERVIEWS',
     num: '06',
     accent: '#22d3ee',
     detail:
-      'Optional. Up to 3 independent LLM validators score forecasts on coherence, precedent, and completeness. A consensus summary is appended to the final report.',
+      'Selected simulated stakeholders can be questioned to expose likely motivations, concerns and reactions.',
+  },
+  {
+    label: 'CONFIDENCE SCORING',
+    num: '07',
+    accent: '#e5a60a',
+    detail:
+      'Report sections receive HIGH, MEDIUM or LOW labels based on evidence density and quality — not certainty.',
+  },
+  {
+    label: 'CONSENSUS VALIDATION',
+    num: '08',
+    accent: '#10b981',
+    detail:
+      'Optional independent validators assess coherence, historical precedent, completeness and risk coverage.',
+  },
+  {
+    label: 'REPORT Q&A',
+    num: '09',
+    accent: '#3d6bff',
+    detail:
+      'Follow-up questions are answered using report context, graph tools, simulation evidence and fresh intelligence.',
   },
 ]
 
 const TECH_STACK = [
   { name: 'OASIS', accent: '#e5a60a' },
-  { name: 'CAMEL AI', accent: '#3d6bff' },
+  { name: 'CAMEL-AI', accent: '#3d6bff' },
   { name: 'Zep Cloud', accent: '#22d3ee' },
   { name: 'Serper', accent: '#10b981' },
-  { name: 'NewsAPI', accent: '#e5a60a' },
-  { name: 'OpenAI', accent: '#3d6bff' },
+  { name: 'Event Registry', accent: '#e5a60a' },
+  { name: 'Gemini API', accent: '#3d6bff' },
+  { name: 'Google Cloud', accent: '#22d3ee' },
+  { name: 'Vue', accent: '#10b981' },
+  { name: 'Flask', accent: '#e5a60a' },
 ]
 
 export function TrustMethodology() {

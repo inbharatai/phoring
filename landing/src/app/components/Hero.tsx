@@ -90,9 +90,9 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4, ease }}
           >
-            Phoring turns your documents and a plain-language scenario into a
-            multi-agent simulation, then a source-cited forecast. Predict markets,
-            policy, product launches, elections, public reaction — anything.
+            Turn documents and a plain-language objective into a live, multi-agent
+            simulation across Twitter and Reddit — then an evidence-linked forecast
+            with confidence scoring, optional multi-model validation and interactive Q&amp;A.
           </motion.p>
 
           {/* CTAs */}
@@ -106,7 +106,7 @@ export function Hero() {
               href="#start"
               className="group relative px-8 py-4 text-[15px] font-semibold bg-accent-blue text-white rounded-xl overflow-hidden transition-all duration-400 hover:shadow-[0_0_60px_rgba(61,107,255,0.35)] hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="relative z-10">Request Demo</span>
+              <span className="relative z-10">Launch Phoring</span>
               <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
             </a>
             <a
@@ -127,10 +127,10 @@ export function Hero() {
             transition={{ duration: 0.8, delay: 0.7, ease }}
           >
             {[
-              { value: '4', unit: 'Stage', label: 'Pipeline' },
-              { value: '3', unit: 'Model', label: 'Consensus' },
-              { value: '100%', unit: 'Source', label: 'Cited' },
-              { value: '11', unit: 'Services', label: 'Integrated' },
+              { value: '9', unit: 'Stage', label: 'Architecture' },
+              { value: '2', unit: 'Social', label: 'Environments' },
+              { value: '3', unit: 'Max', label: 'AI Validators' },
+              { value: '6', unit: 'Agentic', label: 'Report Tools' },
             ].map((item, i) => (
               <div key={i} className="flex items-baseline gap-1.5 min-w-[80px]">
                 <span className="text-xl font-bold text-text-primary font-mono tracking-tight">

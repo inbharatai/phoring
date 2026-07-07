@@ -37,7 +37,7 @@ export function Nav() {
 
         {/* Nav links */}
         <div className="hidden md:flex items-center gap-7">
-          {['How It Works', 'Use Cases', 'Methodology'].map((label) => (
+          {['How It Works', 'Capabilities', 'Architecture', 'Use Cases', 'Methodology'].map((label) => (
             <a
               key={label}
               href={`#${label.toLowerCase().replace(/\s+/g, '-')}`}

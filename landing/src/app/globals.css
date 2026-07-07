@@ -18,6 +18,11 @@
     overflow-x: hidden;
   }
 
+  /* Offset anchored sections so the sticky 64px nav never covers a heading. */
+  section[id] {
+    scroll-margin-top: 80px;
+  }
+
   ::selection {
     background: rgba(61, 107, 255, 0.25);
     color: #fff;
@@ -164,4 +169,25 @@ body::after {
    ─────────────────────────────────────────────────── */
 @keyframes ring-rotate {
   to { transform: rotate(360deg); }
+}
+
+/* ───────────────────────────────────────────────────
+   Reduced motion — honour the user's OS preference.
+   Kills every CSS-driven animation/transition; canvas
+   components also short-circuit their rAF loops (see
+   useReducedMotion from motion/react in each component).
+   ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

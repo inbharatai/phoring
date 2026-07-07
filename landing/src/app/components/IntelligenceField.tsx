@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useCallback } from 'react'
+import { useReducedMotion } from 'motion/react'
 
 /* ──────────────────────────────────────────────────────────────
    IntelligenceField — Full-viewport canvas-rendered particle
@@ -45,6 +46,7 @@ export function IntelligenceField() {
   const signalsRef = useRef<Signal[]>([])
   const mouseRef = useRef({ x: -1000, y: -1000 })
   const dimsRef = useRef({ w: 0, h: 0 })
+  const reduce = useReducedMotion()
 
   const initParticles = useCallback((w: number, h: number) => {
     const count = Math.min(Math.floor((w * h) / 12000), 120)
@@ -90,6 +92,44 @@ export function IntelligenceField() {
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
     }
     window.addEventListener('mousemove', onMove, { passive: true })
+
+    // Reduced motion: render one static frame (nodes + connections), no animation.
+    if (reduce) {
+      const { w, h } = dimsRef.current
+      const particles = particlesRef.current
+      ctx.clearRect(0, 0, w, h)
+      for (const p of particles) {
+        const [r, g, b] = p.color
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha * 0.12})`
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`
+        ctx.fill()
+      }
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const a = particles[i], b = particles[j]
+          const dx = a.x - b.x, dy = a.y - b.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 140) {
+            const strength = 1 - dist / 140
+            ctx.beginPath()
+            ctx.moveTo(a.x, a.y)
+            ctx.lineTo(b.x, b.y)
+            ctx.strokeStyle = `rgba(61,107,255,${strength * 0.07})`
+            ctx.lineWidth = 0.5
+            ctx.stroke()
+          }
+        }
+      }
+      return () => {
+        window.removeEventListener('resize', resize)
+        window.removeEventListener('mousemove', onMove)
+      }
+    }
 
     const CONNECTION_DIST = 140
     const SIGNAL_SPAWN_RATE = 0.012
@@ -219,7 +259,7 @@ export function IntelligenceField() {
       window.removeEventListener('resize', resize)
       window.removeEventListener('mousemove', onMove)
     }
-  }, [initParticles])
+  }, [initParticles, reduce])
 
   return (
     <canvas

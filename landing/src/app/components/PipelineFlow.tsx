@@ -6,8 +6,8 @@ import { PipelineViz } from './PipelineViz'
 const STAGES = [
   {
     num: '01',
-    title: 'Graph Build',
-    desc: 'Upload your source documents (PDF, Markdown, or text). Phoring extracts entities and relationships, then builds an evidence-grade knowledge graph in Zep.',
+    title: 'Evidence Graph',
+    desc: 'Upload PDF, Markdown or text sources. Phoring generates a domain ontology, extracts entities and relationships, enriches the context and builds a queryable Zep knowledge graph.',
     accent: '#3d6bff',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -22,8 +22,8 @@ const STAGES = [
   },
   {
     num: '02',
-    title: 'Agent Setup',
-    desc: 'LLM-generated agent profiles reflect the people, groups, and viewpoints from your evidence layer, with scenario-specific behaviors and constraints.',
+    title: 'Agent Configuration',
+    desc: 'Graph entities become scenario-aligned stakeholders with roles, interests, stances, behavioural traits, influence levels and platform-specific attributes.',
     accent: '#22d3ee',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -36,8 +36,8 @@ const STAGES = [
   },
   {
     num: '03',
-    title: 'Simulation',
-    desc: 'OASIS runs agents through synthetic social environments. Actions, reactions, and narrative shifts unfold across configurable rounds.',
+    title: 'Parallel Simulation',
+    desc: 'OASIS runs synthetic Twitter and Reddit environments concurrently. Monitor platform activity, agent actions, reactions and round-by-round narrative movement in real time.',
     accent: '#e5a60a',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -50,8 +50,8 @@ const STAGES = [
   },
   {
     num: '04',
-    title: 'Intelligence Report',
-    desc: 'The Report Agent synthesizes graph evidence, web intelligence, and simulation outcomes into a source-cited forecast with confidence scoring.',
+    title: 'Forecast &amp; Q&amp;A',
+    desc: 'The Report Agent combines graph evidence, web intelligence, simulation outcomes and stakeholder interviews into a cited forecast with confidence labels, optional consensus validation and interactive follow-up Q&A.',
     accent: '#10b981',
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
@@ -81,10 +81,10 @@ export function PipelineFlow() {
               How It Works
             </span>
             <h2 className="text-[1.75rem] sm:text-[2rem] lg:text-[2.5rem] font-semibold tracking-[-0.025em] leading-[1.15] text-text-primary">
-              Four-stage pipeline.
+              Four core phases.
               <br />
               <span className="text-text-secondary">
-                Documents in, forecasts out.
+                One deeper decision-intelligence architecture.
               </span>
             </h2>
           </div>
@@ -156,6 +156,16 @@ export function PipelineFlow() {
             </ScrollReveal>
           ))}
         </div>
+
+        <ScrollReveal>
+          <p className="mt-10 font-mono text-[11px] tracking-[0.1em] uppercase text-text-tertiary/70 text-center">
+            Four user-facing phases backed by a deeper{' '}
+            <a href="#architecture" className="text-accent-blue/80 hover:text-accent-blue transition-colors duration-300">
+              nine-stage architecture
+            </a>
+            .
+          </p>
+        </ScrollReveal>
       </div>
     </section>
   )

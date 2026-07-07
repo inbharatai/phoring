@@ -3,11 +3,13 @@
 import { useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { ScrollReveal } from './ScrollReveal'
+import { useReducedMotion } from 'motion/react'
 
 /* Minimal ambient canvas for the CTA section — radiating pulse rings */
 function PulseField() {
   const ref = useRef<HTMLCanvasElement>(null)
   const animRef = useRef(0)
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     const canvas = ref.current
@@ -26,6 +28,19 @@ function PulseField() {
     resize()
     window.addEventListener('resize', resize)
 
+    // Reduced motion: render a single static ring and stop.
+    if (reduce) {
+      const rect = canvas.parentElement?.getBoundingClientRect()
+      if (rect) {
+        ctx.beginPath()
+        ctx.arc(rect.width / 2, rect.height / 2, Math.min(rect.width, rect.height) * 0.18, 0, Math.PI * 2)
+        ctx.strokeStyle = 'rgba(61,107,255,0.06)'
+        ctx.lineWidth = 1
+        ctx.stroke()
+      }
+      return () => window.removeEventListener('resize', resize)
+    }
+
     const rings: { born: number; speed: number }[] = []
     let last = 0
 
@@ -38,7 +53,7 @@ function PulseField() {
 
       // Spawn ring every ~2.5s
       if (t - last > 2500) {
-        rings.push({ born: t, speed: 0.04 + Math.random() * 0.02 })
+        rings.push({ born: t, speed: 0.04 + 0.02 })
         last = t
         if (rings.length > 6) rings.shift()
       }
@@ -67,14 +82,14 @@ function PulseField() {
       cancelAnimationFrame(animRef.current)
       window.removeEventListener('resize', resize)
     }
-  }, [])
+  }, [reduce])
 
   return <canvas ref={ref} className="absolute inset-0 w-full h-full" aria-hidden="true" />
 }
 
 export function FinalCTA() {
   return (
-    <section id="start" className="relative py-32 lg:py-44">
+    <section className="relative py-32 lg:py-44">
       <div className="absolute top-0 inset-x-0 section-divider" />
 
       {/* Atmospheric glow */}
@@ -105,26 +120,27 @@ export function FinalCTA() {
           </div>
 
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent-blue/70 block mb-6">
-            Ready to Forecast
+            Open-Source · Docker-Ready
           </span>
 
           <h2 className="text-[1.75rem] sm:text-[2.5rem] lg:text-[3.25rem] font-bold tracking-[-0.03em] leading-[1.08] text-text-primary mb-6">
-            Start predicting
+            Move from documents
             <br />
-            <span className="text-gradient">what happens next.</span>
+            <span className="text-gradient">to simulated decisions.</span>
           </h2>
 
           <p className="text-[1.05rem] text-text-secondary leading-relaxed max-w-md mx-auto mb-10">
-            Upload your sources, describe any scenario, and let Phoring generate
-            a simulation-backed, source-cited forecast with confidence scores.
+            Build an evidence graph, run parallel social simulations and generate an
+            inspectable forecast from the same workflow. Run locally or deploy through
+            the documented Google Cloud architecture.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="/process/new"
+              href="#start"
               className="group relative px-9 py-4 text-[15px] font-semibold bg-accent-blue text-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_60px_rgba(61,107,255,0.3)] hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="relative z-10">Request Demo</span>
+              <span className="relative z-10">Launch Phoring</span>
               <span className="absolute inset-0 bg-gradient-to-r from-accent-blue via-[#4a78ff] to-accent-blue bg-[length:200%_100%] opacity-0 group-hover:opacity-100 group-hover:animate-[gradient-shift_2s_ease_infinite] transition-opacity duration-300" />
             </a>
             <a
@@ -133,7 +149,7 @@ export function FinalCTA() {
               rel="noopener noreferrer"
               className="px-9 py-4 text-[15px] text-text-secondary border border-border rounded-xl transition-all duration-300 hover:text-text-primary hover:border-border-hover hover:bg-bg-elevated/50"
             >
-              View Sample Report
+              View on GitHub
             </a>
           </div>
         </ScrollReveal>

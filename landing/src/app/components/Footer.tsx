@@ -1,5 +1,14 @@
 import Image from 'next/image'
 
+const NAV_LINKS = [
+  { name: 'How It Works', href: '#how-it-works' },
+  { name: 'Capabilities', href: '#capabilities' },
+  { name: 'Architecture', href: '#architecture' },
+  { name: 'Use Cases', href: '#use-cases' },
+  { name: 'Methodology', href: '#methodology' },
+  { name: 'Documentation', href: 'https://github.com/inbharatai/phoring#readme' },
+]
+
 export function Footer() {
   return (
     <footer className="border-t border-border">
@@ -22,12 +31,7 @@ export function Footer() {
 
           {/* Nav links */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            {[
-              { name: 'How It Works', href: '#how-it-works' },
-              { name: 'Use Cases', href: '#use-cases' },
-              { name: 'Methodology', href: '#methodology' },
-              { name: 'Documentation', href: 'https://github.com/inbharatai/phoring#readme' },
-            ].map((link) => (
+            {NAV_LINKS.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
@@ -40,6 +44,16 @@ export function Footer() {
             ))}
           </div>
         </div>
+
+        {/* Honest disclaimer — readable, not alarming */}
+        <p className="font-mono text-[10px] leading-[1.7] text-text-tertiary/60 max-w-3xl mb-8">
+          Phoring is a scenario-analysis and decision-support system. Forecasts are
+          probabilistic and depend on source quality, simulation configuration and model
+          behaviour. Confidence labels reflect evidence strength, not certainty. Public
+          social signals are retrieved through search indexing rather than direct
+          social-platform APIs. Outputs are decision-support analysis, not investment
+          advice, and scenario analysis, not deterministic election predictions.
+        </p>
 
         {/* Bottom row */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/50">
@@ -57,13 +71,18 @@ export function Footer() {
             </a>
             <span className="w-px h-3 bg-border/50" />
             <span className="font-mono text-[10px] text-text-tertiary/50">
-              Universal decision intelligence — predict anything from documents
+              Open-source decision intelligence — simulate anything you can describe
             </span>
           </div>
 
-          <span className="font-mono text-[9px] text-text-tertiary/40">
-            Apache-2.0
-          </span>
+          <a
+            href="https://github.com/inbharatai/phoring/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[9px] text-text-tertiary/40 hover:text-text-tertiary/70 transition-colors duration-300"
+          >
+            MIT License · Open Source
+          </a>
         </div>
       </div>
     </footer>
