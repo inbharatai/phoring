@@ -102,6 +102,9 @@ class Config:
     # Text processing config
     DEFAULT_CHUNK_SIZE = 500  # default chunk size
     DEFAULT_CHUNK_OVERLAP = 50  # default chunk overlap
+    # Page-level OCR for mixed PDFs remains opt-in to avoid silent cost changes.
+    ENABLE_PAGE_OCR_FALLBACK = _env_bool('ENABLE_PAGE_OCR_FALLBACK', False)
+    PDF_MIN_NATIVE_TEXT_CHARS = int(os.environ.get('PDF_MIN_NATIVE_TEXT_CHARS', '40'))
 
     # Graph pagination caps
     MAX_GRAPH_NODES = int(os.environ.get('MAX_GRAPH_NODES', '2000'))
@@ -149,4 +152,6 @@ class Config:
             )
         if cls.SIMULATION_BASE_SEED < 0:
             errors.append("SIMULATION_BASE_SEED must be non-negative")
+        if cls.PDF_MIN_NATIVE_TEXT_CHARS < 0:
+            errors.append("PDF_MIN_NATIVE_TEXT_CHARS must be non-negative")
         return errors
