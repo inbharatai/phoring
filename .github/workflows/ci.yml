@@ -33,17 +33,15 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
 
-      - name: Install lightweight test dependencies
+      - name: Install test runner
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov flask flask-cors python-dotenv openai
+          python -m pip install pytest pytest-cov
 
       - name: Compile backend source
         run: python -m compileall -q app
 
       - name: Run deterministic foundation tests
-        env:
-          PYTHONPATH: .
         run: pytest -q tests/test_determinism.py tests/test_run_manifest.py
 
   frontend-build:
