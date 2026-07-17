@@ -1,13 +1,28 @@
+import importlib.util
 import random
+import sys
+from pathlib import Path
 
 import pytest
 
-from app.utils.determinism import (
-    deterministic_choice,
-    deterministic_int,
-    deterministic_rng,
-    stable_int_seed,
+
+def _load_module(name: str, relative_path: str):
+    module_path = Path(__file__).parents[1] / relative_path
+    spec = importlib.util.spec_from_file_location(name, module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+determinism = _load_module(
+    "phoring_test_determinism", "app/utils/determinism.py"
 )
+deterministic_choice = determinism.deterministic_choice
+deterministic_int = determinism.deterministic_int
+deterministic_rng = determinism.deterministic_rng
+stable_int_seed = determinism.stable_int_seed
 
 
 def test_stable_seed_is_repeatable_and_namespace_sensitive():
