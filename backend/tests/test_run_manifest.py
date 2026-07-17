@@ -1,6 +1,25 @@
+import importlib.util
 import json
+import sys
+from pathlib import Path
 
-from app.models.run_manifest import RunManifest, SourceFingerprint, fingerprint_files
+
+def _load_module(name: str, relative_path: str):
+    module_path = Path(__file__).parents[1] / relative_path
+    spec = importlib.util.spec_from_file_location(name, module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+run_manifest = _load_module(
+    "phoring_test_run_manifest", "app/models/run_manifest.py"
+)
+RunManifest = run_manifest.RunManifest
+SourceFingerprint = run_manifest.SourceFingerprint
+fingerprint_files = run_manifest.fingerprint_files
 
 
 def _manifest(sources=None):
